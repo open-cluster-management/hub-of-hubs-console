@@ -11,3 +11,10 @@
 .pf-c-page__sidebar.pf-m-expanded {
     background-color: blue;
 }
+
+.pf-c-page__header-brand-link::after {
+    font-weight: bold;
+    font-size: xxx-large;
+  color: red;
+  content: "Experimental";
+}
