@@ -3,3 +3,11 @@
 .pf-c-toolbar__content-section {
     row-gap: 16px !important;
 }
+
+.pf-c-page__header {
+    background-color: blue;
+}
+
+.pf-c-page__sidebar.pf-m-expanded {
+    background-color: blue;
+}
