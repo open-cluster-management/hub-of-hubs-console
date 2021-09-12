@@ -44,6 +44,8 @@ const resourceCache: {
     }
 } = {}
 
+const allowedKinds = new Set<string>()
+
 export function startWatching(): void {
     const token = serviceAcccountToken
 
@@ -53,7 +55,7 @@ export function startWatching(): void {
     watchResource(token, 'cluster.open-cluster-management.io/v1beta1', 'clusterCurators')
     watchResource(token, 'cluster.open-cluster-management.io/v1alpha1', 'managedClusterSets')
     watchResource(token, 'cluster.open-cluster-management.io/v1alpha1', 'managedClusterSetBindings')
-    watchResource(token, 'cluster.open-cluster-management.io/v1', 'managedClusters')
+    watchRestResource(token, 'managedclusters')
     watchResource(token, 'internal.open-cluster-management.io/v1beta1', 'managedClusterInfos')
     watchResource(token, 'inventory.open-cluster-management.io/v1alpha1', 'bareMetalAssets')
     watchResource(token, 'operator.open-cluster-management.io/v1', 'multiClusterHubs')
@@ -96,6 +98,17 @@ export function startWatching(): void {
     watchResource(token, 'agent-install.openshift.io/v1beta1', 'infraenvs')
 }
 
+function watchRestResource(
+    token: string,
+    kind: string,
+): void {
+    allowedKinds.add(kind)
+    const url = `${process.env.REST_API_URL}/${kind}?watch`
+    doWatch(token, kind, url, function(): void {
+      watchRestResource(token, kind)
+    })
+}
+
 export function watchResource(
     token: string,
     apiVersion: string,
@@ -126,7 +139,17 @@ export function watchResource(
     path += '&allowWatchBookmarks'
 
     const url = `${process.env.CLUSTER_API_URL}${path}`
+    doWatch(token, kind, url, function(): void {
+      watchResource(token, apiVersion, kind, options)
+    })
+}
 
+function doWatch(
+    token: string,
+    kind: string,
+    url: string,
+    retryFunction: () => void
+): void {
     let buffer: Buffer = Buffer.from('')
     const abortController = new AbortController()
 
@@ -171,7 +194,7 @@ export function watchResource(
     function onClose() {
         if (process.env.LOG_WATCH) logger.info({ msg: 'watch stop', kind })
         if (stopping) return
-        watchResource(token, apiVersion, kind, options)
+        retryFunction()
     }
 
     function onError(err: Error) {
@@ -288,6 +311,10 @@ function eventFilter(token: string, serverSideEvent: ServerSideEvent<ServerSideE
         case 'MODIFIED': {
             const watchEvent = serverSideEvent.data
             const resource = watchEvent.object
+
+            if (allowedKinds.has(resource.kind)) {
+                 return Promise.resolve(true)
+            }
 
             switch (resource.kind) {
                 case 'FeatureGate': // Allow feature gates for all users
