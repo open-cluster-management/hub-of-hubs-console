@@ -44,7 +44,7 @@ const resourceCache: {
     }
 } = {}
 
-const allowedKinds = new Set<string>()
+const useAuthorizationURLKinds = new Set<string>()
 
 export function startWatching(): void {
     const token = serviceAcccountToken
@@ -102,7 +102,7 @@ function watchRestResource(
     token: string,
     kind: string,
 ): void {
-    allowedKinds.add(kind)
+    useAuthorizationURLKinds.add(kind)
     const url = `${process.env.REST_API_URL}/${kind}?watch`
     doWatch(token, kind, url, function(): void {
       watchRestResource(token, kind)
@@ -312,7 +312,7 @@ function eventFilter(token: string, serverSideEvent: ServerSideEvent<ServerSideE
             const watchEvent = serverSideEvent.data
             const resource = watchEvent.object
 
-            if (allowedKinds.has(resource.kind)) {
+            if (useAuthorizationURLKinds.has(resource.kind)) {
                  return Promise.resolve(true)
             }
 
