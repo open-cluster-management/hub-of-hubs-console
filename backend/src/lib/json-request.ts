@@ -23,18 +23,22 @@ export interface PostResponse<T> {
 }
 
 export function jsonPost<T = unknown>(url: string, body: unknown, token?: string): Promise<PostResponse<T>> {
+       return jsonPostWithAgent(url, body, agent, token)
+}
+
+export function jsonPostWithAgent<T = unknown>(url: string, body: unknown, agent: Agent, token?: string): Promise<PostResponse<T>> {
     const headers: HeadersInit = {
-        [HTTP2_HEADER_ACCEPT]: 'application/json',
-        [HTTP2_HEADER_CONTENT_TYPE]: 'application/json',
+	[HTTP2_HEADER_ACCEPT]: 'application/json',
+	[HTTP2_HEADER_CONTENT_TYPE]: 'application/json',
     }
     if (token) headers[HTTP2_HEADER_AUTHORIZATION] = `Bearer ${token}`
     return fetchRetry(url, { method: 'POST', headers, agent, body: JSON.stringify(body), compress: true }).then(
-        async (response) => {
-            const result = {
-                statusCode: response.status,
-                body: (await response.json()) as unknown as T,
-            }
-            return result
-        }
+	async (response) => {
+	    const result = {
+		statusCode: response.status,
+		body: (await response.json()) as unknown as T,
+	    }
+	    return result
+	}
     )
 }
