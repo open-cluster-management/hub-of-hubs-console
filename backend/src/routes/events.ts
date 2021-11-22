@@ -2,16 +2,18 @@
 
 import AbortController from 'abort-controller'
 import { IncomingMessage } from 'http'
+import { Agent } from 'https'
 import { Http2ServerRequest, Http2ServerResponse } from 'http2'
 import { parseCookies } from '../lib/cookies'
 import { requestRetry } from '../lib/request-retry'
-import { jsonPost } from '../lib/json-request'
+import { jsonRequest, jsonPost, jsonPostWithAgent } from '../lib/json-request'
 import { logger } from '../lib/logger'
 import { noop } from '../lib/noop'
 import { unauthorized } from '../lib/respond'
 import { ServerSideEvent, ServerSideEvents } from '../lib/server-side-events'
 import { IResource } from '../resources/resource'
 import { serviceAcccountToken, setDead } from './liveness'
+import { readFileSync } from 'fs'
 
 export function events(req: Http2ServerRequest, res: Http2ServerResponse): void {
     const token = parseCookies(req)['acm-access-token-cookie']
@@ -45,6 +47,11 @@ const resourceCache: {
 } = {}
 
 const useAuthorizationURLKinds = new Set<string>()
+
+const authorizationAgent = process.env.AUTHORIZATION_CA_BUNDLE_PATH ? new Agent({ ca: readFileSync(
+       process.env.AUTHORIZATION_CA_BUNDLE_PATH,
+      `utf-8`,
+    )}) : new Agent()
 
 export function startWatching(): void {
     const token = serviceAcccountToken
@@ -312,8 +319,8 @@ function eventFilter(token: string, serverSideEvent: ServerSideEvent<ServerSideE
             const watchEvent = serverSideEvent.data
             const resource = watchEvent.object
 
-            if (useAuthorizationURLKinds.has(resource.kind)) {
-                 return Promise.resolve(true)
+            if (useAuthorizationURLKinds.has(resource.kind.toLowerCase() + 's')) {
+                 return isAuthorized(resource, token)
             }
 
             switch (resource.kind) {
@@ -352,6 +359,42 @@ function canListNamespacedScopedKind(resource: IResource, token: string): Promis
         'list',
         token
     )
+}
+
+function isAuthorized(resource: IResource, token: string): Promise<boolean> {
+    if (!process.env.AUTHORIZATION_URL) {
+        return Promise.resolve(false)
+    }
+
+    const promise = jsonRequest<{ metadata: { name: string } }>(
+        process.env.CLUSTER_API_URL + '/apis/user.openshift.io/v1/users/~',
+        token).then((response) => {
+            return jsonPostWithAgent<{ result: boolean }>(
+                process.env.AUTHORIZATION_URL + '/v1/data/rbac/clusters/allow',
+                {
+                    input: {
+                        user: response.metadata.name,
+                        cluster: resource,
+                    },
+                },
+                authorizationAgent,
+                null
+            ).then((response) => {
+                if (process.env.LOG_ACCESS === 'true') {
+                    logger.debug({
+                        msg: 'access',
+                        allowed: response.body.result,
+                        verb: 'get',
+                        resource: resource.kind.toLowerCase() + 's',
+                        name: resource.metadata?.name,
+                        namespace: resource.metadata?.namespace,
+                    })
+                }
+                return response.body.result
+            })
+        })
+
+    return promise
 }
 
 function canGetResource(resource: IResource, token: string): Promise<boolean> {
