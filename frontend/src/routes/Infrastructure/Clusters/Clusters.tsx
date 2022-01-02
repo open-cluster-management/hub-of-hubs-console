@@ -74,17 +74,6 @@ export default function ClusterManagementPage() {
                             <AcmSecondaryNavItem isActive={location.pathname.startsWith(NavigationPath.clusters)}>
                                 <Link to={NavigationPath.clusters}>{t('cluster:clusters')}</Link>
                             </AcmSecondaryNavItem>
-                            <AcmSecondaryNavItem isActive={location.pathname.startsWith(NavigationPath.clusterSets)}>
-                                <Link to={NavigationPath.clusterSets}>{t('cluster:clusterSets')}</Link>
-                            </AcmSecondaryNavItem>
-                            <AcmSecondaryNavItem isActive={location.pathname.startsWith(NavigationPath.clusterPools)}>
-                                <Link to={NavigationPath.clusterPools}>{t('cluster:clusterPools')}</Link>
-                            </AcmSecondaryNavItem>
-                            <AcmSecondaryNavItem
-                                isActive={location.pathname.startsWith(NavigationPath.discoveredClusters)}
-                            >
-                                <Link to={NavigationPath.discoveredClusters}>{t('cluster:clusters.discovered')}</Link>
-                            </AcmSecondaryNavItem>
                         </AcmSecondaryNav>
                     }
                     actions={actions}
