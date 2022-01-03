@@ -2,11 +2,11 @@
 /* istanbul ignore file */
 
 import {
-    AcmHeader,
     AcmTablePaginationContextProvider,
     AcmToastProvider,
     AcmToastGroup,
 } from '@open-cluster-management/ui-components'
+import { HubOfHubsHeader } from 'hub-of-hubs-ui-components'
 import { Suspense, lazy } from 'react'
 import { BrowserRouter, Redirect, Route, Switch } from 'react-router-dom'
 import { useRecoilState } from 'recoil'
@@ -56,7 +56,7 @@ export default function App() {
     const [route] = useRecoilState(acmRouteState)
     return (
         <BrowserRouter>
-            <AcmHeader route={route}>
+            <HubOfHubsHeader route={route}>
                 <LoadData>
                     <AcmToastProvider>
                         <AcmToastGroup />
@@ -131,7 +131,7 @@ export default function App() {
                         </AcmTablePaginationContextProvider>
                     </AcmToastProvider>
                 </LoadData>
-            </AcmHeader>
+            </HubOfHubsHeader>
         </BrowserRouter>
     )
 }
