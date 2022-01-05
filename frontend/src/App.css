@@ -15,6 +15,6 @@
 .pf-c-page__header-brand-link::after {
     font-weight: bold;
     font-size: xxx-large;
-  color: red;
-  content: "Hub-of-Hubs,Experimental";
+    color: yellow;
+    content: "Hub-of-Hubs,Experimental";
 }
