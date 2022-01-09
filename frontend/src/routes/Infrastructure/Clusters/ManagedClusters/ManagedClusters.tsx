@@ -256,7 +256,7 @@ export function ClustersTable(props: {
                         cell: (cluster) => {
                             if (cluster.labels) {
                                 const labelKeys = Object.keys(cluster.labels)
-                                const collapse =
+                                let collapse =
                                     [
                                         'cloud',
                                         'clusterID',
@@ -266,13 +266,20 @@ export function ClustersTable(props: {
                                         'vendor',
                                         'managed-by',
                                         'local-cluster',
+					'openshiftVersion',
                                     ].filter((label) => labelKeys.includes(label)) ?? []
+				labelKeys.forEach((label) => {
+                                    if (label.includes('open-cluster-management.io')) {
+                                        collapse.push(label)
+                                    }
+                                })
                                 return (
                                     <AcmLabels
                                         labels={cluster.labels}
                                         style={{ maxWidth: '600px' }}
                                         expandedText={t('common:show.less')}
                                         collapsedText={t('common:show.more', { number: collapse.length })}
+					allCollapsedText={t('common:count.labels', { number: collapse.length })}
                                         collapse={collapse}
                                     />
                                 )
