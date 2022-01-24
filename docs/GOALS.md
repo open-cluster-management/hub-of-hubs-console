@@ -23,9 +23,9 @@ This involves pulling in the OCP dynamic plugin SDK and building using webpack. 
 
 |      Status | Issue                                                                     | Description                        | Assigned |
 | ----------: | ------------------------------------------------------------------------- | ---------------------------------- | -------- |
-|             | [#12087](https://github.com/open-cluster-management/backlog/issues/12087) | Fix strong type checking           |
+|             | [#12087](https://github.com/stolostron/backlog/issues/12087) | Fix strong type checking           |
 |      Review |                                                                           | Support NPM workspaces             | James    |
 | In Progress |                                                                           | Resource routes                    | James    |
 |     Blocked |                                                                           | Credentials/Infrastructure routes  | James    |
-| In Progress | [#12644](https://github.com/open-cluster-management/backlog/issues/12644) | Webpack 5 federated modules        | James    |
+| In Progress | [#12644](https://github.com/stolostron/backlog/issues/12644) | Webpack 5 federated modules        | James    |
 |     Blocked |                                                                           | Credentials/Infrastructure plugins | James    |
