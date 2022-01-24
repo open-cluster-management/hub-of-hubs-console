@@ -48,8 +48,5 @@
         "tabWidth": 4,
         "semi": false,
         "singleQuote": true
-    },
-    "dependencies": {
-        "hub-of-hubs-ui-components": "github:open-cluster-management/hub-of-hubs-ui-components#v0.3.1"
     }
 }
