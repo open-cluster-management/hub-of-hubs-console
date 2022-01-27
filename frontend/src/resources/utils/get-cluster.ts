@@ -249,7 +249,7 @@ export function getCluster(
             clusterDeployment?.metadata?.labels?.[managedClusterSetLabel],
         owner: getOwner(clusterDeployment, clusterClaim),
         managedClusters: getManagedClusters(
-            managedCluster?.metadata.name,
+            clusterDeployment?.metadata.name ?? managedCluster?.metadata.name ?? managedClusterInfo?.metadata.name,
             clusterDeployments,
             managedClusterInfos,
             certificateSigningRequests,
