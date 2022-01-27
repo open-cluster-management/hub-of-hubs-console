@@ -85,6 +85,7 @@ export type Cluster = {
         createdBy?: string
         claimedBy?: string
     }
+    managedClusters?: Cluster[]
 }
 
 export type DistributionInfo = {
@@ -174,27 +175,44 @@ export function mapClusters(
                     aci.metadata.namespace === clusterDeployment.metadata.namespace &&
                     aci.metadata.name === clusterDeployment?.spec?.clusterInstallRef?.name
             )
-        return getCluster(
-            managedClusterInfo,
-            clusterDeployment,
-            certificateSigningRequests,
-            managedCluster,
-            addons,
-            clusterClaim,
-            clusterCurator,
-            agentClusterInstall
-        )
+        const managedClusterManagedBy = managedCluster?.metadata?.annotations?.["open-cluster-management/managed-by"]
+        console.log(managedClusterManagedBy)
+        console.log(managedCluster?.metadata?.annotations)
+        if (managedClusterManagedBy === undefined) {
+            return getCluster(
+                managedClusterInfos,
+                managedClusterInfo,
+                clusterDeployments,
+                clusterDeployment,
+                certificateSigningRequests,
+                managedClusters,
+                managedCluster,
+                addons,
+                clusterClaims,
+                clusterClaim,
+                clusterCurators,
+                clusterCurator,
+                agentClusterInstalls,
+                agentClusterInstall
+            )
+        }
     })
 }
 
 export function getCluster(
+    managedClusterInfos: ManagedClusterInfo[] = [],
     managedClusterInfo: ManagedClusterInfo | undefined,
+    clusterDeployments: ClusterDeployment[] = [],
     clusterDeployment: ClusterDeployment | undefined,
     certificateSigningRequests: CertificateSigningRequest[] | undefined,
+    managedClusters: ManagedCluster[] = [],
     managedCluster: ManagedCluster | undefined,
     managedClusterAddOns: ManagedClusterAddOn[],
+    clusterClaims: ClusterClaim[] = [],
     clusterClaim: ClusterClaim | undefined,
+    clusterCurators: ClusterCurator[] = [],
     clusterCurator: ClusterCurator | undefined,
+    agentClusterInstalls: CIM.AgentClusterInstallK8sResource[] = [],
     agentClusterInstall: CIM.AgentClusterInstallK8sResource | undefined
 ): Cluster {
     const { status, statusMessage } = getClusterStatus(
@@ -232,7 +250,68 @@ export function getCluster(
             managedClusterInfo?.metadata?.labels?.[managedClusterSetLabel] ||
             clusterDeployment?.metadata?.labels?.[managedClusterSetLabel],
         owner: getOwner(clusterDeployment, clusterClaim),
+        managedClusters: getManagedClusters(
+            managedCluster?.metadata.name,
+            clusterDeployments,
+            managedClusterInfos,
+            certificateSigningRequests,
+            managedClusters,
+            managedClusterAddOns,
+            clusterClaims,
+            clusterCurators,
+            agentClusterInstalls
+        )
     }
+}
+
+export function getManagedClusters(
+    mcName: string | undefined,
+    clusterDeployments: ClusterDeployment[] = [],
+    managedClusterInfos: ManagedClusterInfo[] = [],
+    certificateSigningRequests: CertificateSigningRequest[] = [],
+    managedClusters: ManagedCluster[] = [],
+    managedClusterAddOns: ManagedClusterAddOn[] = [],
+    clusterClaims: ClusterClaim[] = [],
+    clusterCurators: ClusterCurator[] = [],
+    agentClusterInstalls: CIM.AgentClusterInstallK8sResource[] = []
+) {
+    const managedByClusters = managedClusters.filter((mc) => mcName === mc?.metadata?.annotations?.["open-cluster-management/managed-by"]) ?? []
+    const uniqueClusterNames = Array.from(
+        new Set([
+            ...managedByClusters.map((mc) => mc.metadata.name),
+        ])
+    )
+    return uniqueClusterNames.map((cluster) => {
+        const clusterDeployment = clusterDeployments?.find((cd) => cd.metadata?.name === cluster)
+        const managedClusterInfo = managedClusterInfos?.find((mc) => mc.metadata?.name === cluster)
+        const managedCluster = managedClusters?.find((mc) => mc.metadata?.name === cluster)
+        const addons = managedClusterAddOns.filter((mca) => mca.metadata.namespace === cluster)
+        const clusterClaim = clusterClaims.find((clusterClaim) => clusterClaim.spec?.namespace === cluster)
+        const clusterCurator = clusterCurators.find((cc) => cc.metadata.namespace === cluster)
+        const agentClusterInstall =
+            clusterDeployment?.spec?.clusterInstallRef &&
+            agentClusterInstalls.find(
+                (aci) =>
+                    aci.metadata.namespace === clusterDeployment.metadata.namespace &&
+                    aci.metadata.name === clusterDeployment?.spec?.clusterInstallRef?.name
+            )
+        return getCluster(
+            managedClusterInfos,
+            managedClusterInfo,
+            clusterDeployments,
+            clusterDeployment,
+            certificateSigningRequests,
+            managedClusters,
+            managedCluster,
+            addons,
+            clusterClaims,
+            clusterClaim,
+            clusterCurators,
+            clusterCurator,
+            agentClusterInstalls,
+            agentClusterInstall,
+        )
+    })
 }
 
 const checkForCondition = (condition: string, conditions: V1CustomResourceDefinitionCondition[], status?: string) =>

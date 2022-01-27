@@ -1,5 +1,6 @@
 /* Copyright Contributors to the Open Cluster Management project */
 
+import { makeStyles } from '@material-ui/styles'
 import {
     AcmAlertContext,
     AcmEmptyState,
@@ -196,6 +197,35 @@ export function ClustersTable(props: {
             <AcmTable<Cluster>
                 plural="clusters"
                 items={props.clusters}
+                addSubRows={(cluster: Cluster) => {
+                    if (cluster.managedClusters === undefined || (cluster.managedClusters !== undefined && cluster.managedClusters.length === 0)) {
+                        
+                        return undefined
+                    } else {
+                        return [
+                            {
+                                cells: [
+                                    {
+                                        title: (
+                                            <>
+                                                {true && (
+                                                    <div style={{ marginTop: '16px', marginBottom: '16px' }}>
+                                                        <TextContent>
+                                                            <Text component={TextVariants.h3}>
+                                                                {t('cluster.clusters')}
+                                                            </Text>
+                                                        </TextContent>
+                                                        <ManagedClustersTable clusters={cluster.managedClusters} />
+                                                    </div>
+                                                )}
+                                            </>
+                                        ),
+                                    },
+                                ],
+                            },
+                        ]
+                    }
+                }}
                 columns={[
                     {
                         header: t('table.name'),
@@ -440,5 +470,133 @@ export function ClustersTable(props: {
                 emptyState={props.emptyState}
             />
         </Fragment>
+    )
+}
+
+const useStyles = makeStyles({
+    table: {
+        '& .pf-c-table tr > *:first-child': {
+            paddingLeft: '0 !important',
+        },
+    },
+})
+
+function ManagedClustersTable(props: { clusters: Cluster[] }) {
+    const { t } = useTranslation(['cluster'])
+    const classes = useStyles()
+    const [clusterCurators] = useRecoilState(clusterCuratorsState)
+    return (
+        <div className={classes.table}>
+            <AcmTable<Cluster>
+                noBorders
+                keyFn={(cluster: Cluster) => cluster.name!}
+                key="managedClustersTable"
+                autoHidePagination
+                showToolbar={false}
+                plural="clusters"
+                items={props.clusters}
+                columns={[
+                    {
+                        header: t('table.name'),
+                        sort: 'displayName',
+                        cell: (cluster) => (
+                            <>
+                                <span style={{ whiteSpace: 'nowrap' }}>{cluster.displayName}</span>
+                                {cluster.hive.clusterClaimName && (
+                                    <TextContent>
+                                        <Text component={TextVariants.small}>{cluster.hive.clusterClaimName}</Text>
+                                    </TextContent>
+                                )}
+                            </>
+                        ),
+                    },
+                    {
+                        header: t('table.status'),
+                        sort: 'status',
+                        search: 'status',
+                        cell: (cluster: Cluster) => (
+                            <span style={{ whiteSpace: 'nowrap' }}>
+                                <StatusField cluster={cluster} />
+                            </span>
+                        ),
+                    },
+                    {
+                        header: t('table.provider'),
+                        sort: 'provider',
+                        search: 'provider',
+                        cell: (cluster) =>
+                            cluster?.provider ? <AcmInlineProvider provider={cluster?.provider} /> : '-',
+                    },
+                    {
+                        header: t('table.distribution'),
+                        sort: 'distribution.displayVersion',
+                        search: 'distribution.displayVersion',
+                        cell: (cluster) => (
+                            <DistributionField
+                                cluster={cluster}
+                                clusterCurator={clusterCurators.find(
+                                    (curator) => curator.metadata.name === cluster.name
+                                )}
+                            />
+                        ),
+                    },
+                    {
+                        header: t('table.labels'),
+                        search: (cluster) =>
+                            cluster.labels
+                                ? Object.keys(cluster.labels).map((key) => `${key}=${cluster.labels![key]}`)
+                                : '',
+                        cell: (cluster) => {
+                            if (cluster.labels) {
+                                const labelKeys = Object.keys(cluster.labels)
+                                let collapse =
+                                    [
+                                        'cloud',
+                                        'clusterID',
+                                        'installer.name',
+                                        'installer.namespace',
+                                        'name',
+                                        'vendor',
+                                        'managed-by',
+                                        'local-cluster',
+					'openshiftVersion',
+                                    ].filter((label) => labelKeys.includes(label)) ?? []
+				labelKeys.forEach((label) => {
+                                    if (label.includes('open-cluster-management.io')) {
+                                        collapse.push(label)
+                                    }
+                                })
+                                return (
+                                    <AcmLabels
+                                        labels={cluster.labels}
+                                        style={{ maxWidth: '600px' }}
+                                        expandedText={t('common:show.less')}
+                                        collapsedText={t('common:show.more', { number: collapse.length })}
+					allCollapsedText={t('common:count.labels', { number: collapse.length })}
+                                        collapse={collapse}
+                                    />
+                                )
+                            } else {
+                                return '-'
+                            }
+                        },
+                    },
+                    {
+                        header: t('table.nodes'),
+                        cell: (cluster) => {
+                            return cluster.nodes!.nodeList!.length > 0 ? (
+                                <AcmInlineStatusGroup
+                                    healthy={cluster.nodes!.ready}
+                                    danger={cluster.nodes!.unhealthy}
+                                    unknown={cluster.nodes!.unknown}
+                                />
+                            ) : (
+                                '-'
+                            )
+                        },
+                    },
+                ]}
+            />
+        </div>
     )
 }
