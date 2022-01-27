@@ -50,10 +50,14 @@ export default function ClustersPage() {
     let clusters = useAllClusters()
     clusters = clusters.filter((cluster) => {
         // don't show clusters in cluster pools in table
-        if (cluster.hive.clusterPool) {
-            return cluster.hive.clusterClaimName !== undefined
+        if (cluster) {
+            if (cluster.hive.clusterPool) {
+                return cluster.hive.clusterClaimName !== undefined
+            } else {
+                return true
+            }
         } else {
-            return true
+            return false
         }
     })
 

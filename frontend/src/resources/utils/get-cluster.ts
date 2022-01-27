@@ -176,8 +176,6 @@ export function mapClusters(
                     aci.metadata.name === clusterDeployment?.spec?.clusterInstallRef?.name
             )
         const managedClusterManagedBy = managedCluster?.metadata?.annotations?.["open-cluster-management/managed-by"]
-        console.log(managedClusterManagedBy)
-        console.log(managedCluster?.metadata?.annotations)
         if (managedClusterManagedBy === undefined) {
             return getCluster(
                 managedClusterInfos,
