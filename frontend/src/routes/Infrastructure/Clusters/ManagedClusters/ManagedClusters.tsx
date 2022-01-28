@@ -545,47 +545,6 @@ function ManagedClustersTable(props: { clusters: Cluster[] }) {
                         ),
                     },
                     {
-                        header: t('table.labels'),
-                        search: (cluster) =>
-                            cluster.labels
-                                ? Object.keys(cluster.labels).map((key) => `${key}=${cluster.labels![key]}`)
-                                : '',
-                        cell: (cluster) => {
-                            if (cluster.labels) {
-                                const labelKeys = Object.keys(cluster.labels)
-                                let collapse =
-                                    [
-                                        'cloud',
-                                        'clusterID',
-                                        'installer.name',
-                                        'installer.namespace',
-                                        'name',
-                                        'vendor',
-                                        'managed-by',
-                                        'local-cluster',
-					'openshiftVersion',
-                                    ].filter((label) => labelKeys.includes(label)) ?? []
-				labelKeys.forEach((label) => {
-                                    if (label.includes('open-cluster-management.io')) {
-                                        collapse.push(label)
-                                    }
-                                })
-                                return (
-                                    <AcmLabels
-                                        labels={cluster.labels}
-                                        style={{ maxWidth: '600px' }}
-                                        expandedText={t('common:show.less')}
-                                        collapsedText={t('common:show.more', { number: collapse.length })}
-					allCollapsedText={t('common:count.labels', { number: collapse.length })}
-                                        collapse={collapse}
-                                    />
-                                )
-                            } else {
-                                return '-'
-                            }
-                        },
-                    },
-                    {
                         header: t('table.nodes'),
                         cell: (cluster) => {
                             return cluster.nodes!.nodeList!.length > 0 ? (
