@@ -16,6 +16,7 @@ import { DOC_LINKS } from '../../../lib/doc-util'
 import { NavigationPath } from '../../../NavigationPath'
 
 const ClustersPage = lazy(() => import('./ManagedClusters/ManagedClusters'))
+const HierarchicalClustersPage = lazy(() => import('./HierarchicalClusters/HierarchicalClusters'))
 const DiscoveredClustersPage = lazy(() => import('./DiscoveredClusters/DiscoveredClusters'))
 const ClusterSetsPage = lazy(() => import('./ClusterSets/ClusterSets'))
 const ClusterPoolsPage = lazy(() => import('./ClusterPools/ClusterPools'))
@@ -71,6 +72,9 @@ export default function ClusterManagementPage() {
                     }
                     navigation={
                         <AcmSecondaryNav>
+                            <AcmSecondaryNavItem isActive={location.pathname.startsWith(NavigationPath.hierarchyClusters)}>
+                                <Link to={NavigationPath.hierarchyClusters}>{t('cluster:hierarchicalClusters')}</Link>
+                            </AcmSecondaryNavItem>
                             <AcmSecondaryNavItem isActive={location.pathname.startsWith(NavigationPath.clusters)}>
                                 <Link to={NavigationPath.clusters}>{t('cluster:clusters')}</Link>
                             </AcmSecondaryNavItem>
@@ -94,6 +98,7 @@ export default function ClusterManagementPage() {
             <PageContext.Provider value={{ actions, setActions }}>
                 <Suspense fallback={<Fragment />}>
                     <Switch>
+                        <Route exact path={NavigationPath.hierarchyClusters} component={HierarchicalClustersPage} />
                         <Route exact path={NavigationPath.clusters} component={ClustersPage} />
                         <Route exact path={NavigationPath.clusterSets} component={ClusterSetsPage} />
                         <Route exact path={NavigationPath.clusterPools} component={ClusterPoolsPage} />

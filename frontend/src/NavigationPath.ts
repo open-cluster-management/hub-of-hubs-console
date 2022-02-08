@@ -4,6 +4,7 @@
 export enum NavigationPath {
     console = '/multicloud',
     clusters = '/multicloud/clusters',
+    hierarchyClusters = '/multicloud/hierarchy-clusters',
     clusterDetails = '/multicloud/clusters/:id',
     clusterOverview = '/multicloud/clusters/:id/overview',
     clusterNodes = '/multicloud/clusters/:id/nodes',
