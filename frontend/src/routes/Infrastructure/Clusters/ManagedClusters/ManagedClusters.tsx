@@ -39,6 +39,7 @@ import { DiscoveryBanner } from '../DiscoveredClusters/DiscoveryComponents/Banne
 import { AddCluster } from './components/AddCluster'
 import { BatchChannelSelectModal } from './components/BatchChannelSelectModal'
 import { BatchUpgradeModal } from './components/BatchUpgradeModal'
+import { ClusterActionDropdown } from './components/ClusterActionDropdown'
 import { DistributionField } from './components/DistributionField'
 import { StatusField } from './components/StatusField'
 import { useAllClusters } from './components/useAllClusters'
@@ -335,6 +336,13 @@ export function ClustersTable(props: {
                                 '-'
                             )
                         },
+                    },
+                    {
+                        header: '',
+                        cell: (cluster: Cluster) => {
+                            return <ClusterActionDropdown cluster={cluster} isKebab={true} />
+                        },
+                        cellTransforms: [fitContent],
                     },
                 ]}
                 keyFn={mckeyFn}
