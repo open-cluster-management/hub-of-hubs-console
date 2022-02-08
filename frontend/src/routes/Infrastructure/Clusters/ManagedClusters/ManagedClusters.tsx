@@ -115,6 +115,7 @@ export default function ClustersPage() {
                                             components={{ bold: <strong /> }}
                                         />
                                     }
+                                    action={<AddCluster type="button" />}
                                 />
                             }
                         />
