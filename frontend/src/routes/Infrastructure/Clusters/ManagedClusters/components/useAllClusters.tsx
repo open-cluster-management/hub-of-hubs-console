@@ -14,7 +14,7 @@ import {
     agentClusterInstallsState,
 } from '../../../../../atoms'
 
-export function useAllClusters() {
+export function useAllClusters(isFromHierarchical: boolean | false) {
     const [
         managedClusters,
         clusterDeployments,
@@ -46,7 +46,8 @@ export function useAllClusters() {
                 managedClusterAddons,
                 clusterClaims,
                 clusterCurators,
-                agentClusterInstalls
+                agentClusterInstalls,
+                isFromHierarchical
             ),
         [
             clusterDeployments,
