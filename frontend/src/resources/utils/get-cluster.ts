@@ -355,7 +355,7 @@ export function getManagedClusters(
                     aci.metadata.namespace === clusterDeployment.metadata.namespace &&
                     aci.metadata.name === clusterDeployment?.spec?.clusterInstallRef?.name
             )
-        return getCluster(
+        return getHierarchicalCluster(
             managedClusterInfos,
             managedClusterInfo,
             clusterDeployments,
