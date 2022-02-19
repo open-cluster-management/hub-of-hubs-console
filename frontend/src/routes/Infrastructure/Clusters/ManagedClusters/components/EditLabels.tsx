@@ -1,6 +1,6 @@
 /* Copyright Contributors to the Open Cluster Management project */
 
-import { IResource, patchRestResource } from '../../../../../resources'
+import { IResource, patchNonk8sResource } from '../../../../../resources'
 import {
     AcmAlertContext,
     AcmAlertGroup,
@@ -96,7 +96,7 @@ export function EditLabels(props: { resource?: IResource; displayName?: string; 
                                         })
                                     }
 
-                                    return patchRestResource(resource!, patch)
+                                    return patchNonk8sResource(resource!, patch)
                                         .promise.then(() => {
                                             props.close()
                                         })

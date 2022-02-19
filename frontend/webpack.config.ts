@@ -62,6 +62,7 @@ module.exports = function (_env: any, argv: { hot?: boolean; mode: string | unde
                     ? JSON.stringify('')
                     : JSON.stringify('https://localhost:4000'),
                 'process.env.REACT_APP_BACKEND_PATH': JSON.stringify('/multicloud'),
+		'process.env.REACT_APP_NONKUBERNETES_API_PATH': JSON.stringify('/hub-of-hubs-nonk8s-api'),
             }) as unknown as webpack.WebpackPluginInstance,
             new webpack.ProvidePlugin({ Buffer: ['buffer', 'Buffer'], process: 'process' }),
             new MonacoWebpackPlugin({ languages: ['yaml'] }),
