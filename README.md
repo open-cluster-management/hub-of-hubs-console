@@ -132,3 +132,11 @@ To enable this feature, `oc apply -f features/single-node-openshift.yaml`.
 ## References
 
 `console` is part of the open-cluster-management community. For more information, visit: [open-cluster-management.io](https://open-cluster-management.io)
+
+## Debugging
+
+To restart the console pods, run:
+
+```
+kubectl delete pods -n open-cluster-management -l component=console
+```
