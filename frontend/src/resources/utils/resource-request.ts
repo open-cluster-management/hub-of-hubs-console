@@ -1,10 +1,11 @@
 /* Copyright Contributors to the Open Cluster Management project */
 
-import { getResourceApiPath, getResourceName, getResourceNameApiPath, IResource, ResourceList } from '../resource'
+import { getResourceApiPath, getResourcePlural, getResourceName, getResourceNameApiPath, IResource, ResourceList } from '../resource'
 import { Status, StatusKind } from '../status'
 import { AnsibleTowerJobTemplateList } from '../ansible-job'
 
 export const backendUrl = `${process.env.REACT_APP_BACKEND_HOST}` + `${process.env.REACT_APP_BACKEND_PATH}`
+export const restBackendPath = '/hub-of-hubs-nonk8s-api/'
 
 export interface IRequestResult<ResultType = unknown> {
     promise: Promise<ResultType>
@@ -66,6 +67,20 @@ export function patchResource<Resource extends IResource, ResultType = Resource>
     data: unknown
 ): IRequestResult<ResultType> {
     const url = backendUrl + getResourceNameApiPath(resource)
+    const headers: Record<string, string> = {}
+    if (Array.isArray(data)) {
+        headers['Content-Type'] = 'application/json-patch+json'
+    } else {
+        headers['Content-Type'] = 'application/merge-patch+json'
+    }
+    return patchRequest<unknown, ResultType>(url, data, headers)
+}
+
+export function patchRestResource<Resource extends IResource, ResultType = Resource>(
+    resource: Resource,
+    data: unknown
+): IRequestResult<ResultType> {
+    const url = backendUrl + restBackendPath + getResourcePlural(resource) + '/' + getResourceName(resource)
     const headers: Record<string, string> = {}
     if (Array.isArray(data)) {
         headers['Content-Type'] = 'application/json-patch+json'
