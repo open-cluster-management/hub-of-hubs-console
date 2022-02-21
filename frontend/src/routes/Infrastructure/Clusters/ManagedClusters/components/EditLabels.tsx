@@ -63,30 +63,37 @@ export function EditLabels(props: { resource?: IResource; displayName?: string; 
                                     }
                                     let patch: { op: string; path: string; value?: unknown }[] = []
 
+                                    let deletePatchMap: Map<string, {op: string; path: string; value?: unknown}> = new Map()
+
                                     /* istanbul ignore else */
                                     if (resource!.metadata!.labels) {
-                                        patch = [
-                                            ...patch,
-                                            ...Object.keys(resource!.metadata!.labels).map((key) => {
-                                                key = key.replace(/\//g, '~1')
-                                                return {
-                                                    op: 'remove',
-                                                    path: `/metadata/labels/${key}`,
-                                                }
-                                            }),
-                                        ]
+                                        Object.keys(resource!.metadata!.labels).forEach((key) => {
+                                            key = key.replace(/\//g, '~1')
+                                            deletePatchMap.set(key, {
+                                                op: 'remove',
+                                                path: `/metadata/labels/${key}`,
+                                            })
+                                        })
                                     }
-                                    patch = [
-                                        ...patch,
-                                        ...Object.keys(labels).map((key) => {
-                                            const keyPath = key.replace(/\//g, '~1')
-                                            return {
+
+                                    let addPatchMap: Map<string, {op: string; path: string; value?: unknown}> = new Map()
+                                    Object.keys(labels).forEach((key) => {
+                                        const keyPath = key.replace(/\//g, '~1')
+                                        /* delete from deletePatchMap if still exists */
+                                        if (deletePatchMap.has(keyPath)) {
+                                            deletePatchMap.delete(keyPath)
+                                        } else { // add to addPatchMap only if was not consumed in unsetting a delete
+                                            addPatchMap.set(keyPath, {
                                                 op: 'add',
                                                 path: `/metadata/labels/${keyPath}`,
                                                 value: labels[key],
-                                            }
-                                        }),
-                                    ]
+                                            })
+                                        }
+                                    })
+
+                                    /* update patch to hold surviving deletes + surviving adds */
+                                    deletePatchMap.forEach((value, _) => patch.push(value))
+                                    addPatchMap.forEach((value, _) => patch.push(value))
 
                                     if (resource!.metadata?.labels === undefined) {
                                         patch.unshift({
