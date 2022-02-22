@@ -63,36 +63,44 @@ export function EditLabels(props: { resource?: IResource; displayName?: string; 
                                     }
                                     let patch: { op: string; path: string; value?: unknown }[] = []
 
-                                    let deletePatchMap: Map<string, {op: string; path: string; value?: unknown}> = new Map()
+                                    let deletePatchMap: Map<string, { op: string; path: string; value?: string }> =
+                                        new Map()
 
                                     /* istanbul ignore else */
                                     if (resource!.metadata!.labels) {
                                         Object.keys(resource!.metadata!.labels).forEach((key) => {
-                                            key = key.replace(/\//g, '~1')
-                                            deletePatchMap.set(key, {
+                                            const keyPath = key.replace(/\//g, '~1')
+                                            deletePatchMap.set(keyPath, {
                                                 op: 'remove',
-                                                path: `/metadata/labels/${key}`,
+                                                path: `/metadata/labels/${keyPath}`,
+                                                value: resource!.metadata!.labels![key],
                                             })
                                         })
                                     }
 
-                                    let addPatchMap: Map<string, {op: string; path: string; value?: unknown}> = new Map()
+                                    let addPatchMap: Map<string, { op: string; path: string; value?: string }> =
+                                        new Map()
+
                                     Object.keys(labels).forEach((key) => {
                                         const keyPath = key.replace(/\//g, '~1')
-                                        /* delete from deletePatchMap if still exists */
+                                        /* delete from deletePatchMap if key & value match */
                                         if (deletePatchMap.has(keyPath)) {
-                                            deletePatchMap.delete(keyPath)
-                                        } else { // add to addPatchMap only if was not consumed in unsetting a delete
-                                            addPatchMap.set(keyPath, {
-                                                op: 'add',
-                                                path: `/metadata/labels/${keyPath}`,
-                                                value: labels[key],
-                                            })
+                                            if (deletePatchMap.get(keyPath)!.value === labels[key]) {
+                                                deletePatchMap.delete(keyPath)
+                                                return
+                                            }
                                         }
+                                        // add to addPatchMap only if was not consumed in unsetting a delete
+                                        addPatchMap.set(keyPath, {
+                                            op: 'add',
+                                            path: `/metadata/labels/${keyPath}`,
+                                            value: labels[key],
+                                        })
                                     })
 
-                                    /* update patch to hold surviving deletes + surviving adds */
-                                    deletePatchMap.forEach((value, _) => patch.push(value))
+                                    /* update patch to hold surviving (new) deletes + adds */
+                                    deletePatchMap.forEach((value, _) =>
+                                        patch.push({ op: value.op, path: value.path, }))
                                     addPatchMap.forEach((value, _) => patch.push(value))
 
                                     if (resource!.metadata?.labels === undefined) {
