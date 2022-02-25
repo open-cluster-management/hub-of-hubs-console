@@ -16,10 +16,10 @@ import { DOC_LINKS } from '../../../lib/doc-util'
 import { NavigationPath } from '../../../NavigationPath'
 
 const ClustersPage = lazy(() => import('./ManagedClusters/ManagedClusters'))
-const HierarchicalClustersPage = lazy(() => import('./HierarchicalClusters/HierarchicalClusters'))
 const DiscoveredClustersPage = lazy(() => import('./DiscoveredClusters/DiscoveredClusters'))
 const ClusterSetsPage = lazy(() => import('./ClusterSets/ClusterSets'))
 const ClusterPoolsPage = lazy(() => import('./ClusterPools/ClusterPools'))
+const HierarchicalClustersPage = lazy(() => import('./HierarchicalClusters/HierarchicalClusters'))
 
 export const PageContext = createContext<{
     readonly actions: null | ReactNode
@@ -44,13 +44,26 @@ export const usePageContext = (showActions: boolean, Component: ElementType) => 
     return Component
 }
 
+
 export default function ClusterManagementPage() {
+    const location = useLocation()
+    return <ClusterManagement fromHierarchy={location.pathname.startsWith(NavigationPath.hierarchyClusters)} />
+}
+
+export function ClusterManagement(props: {
+    fromHierarchy: boolean
+}) {
     const [actions, setActions] = useState<undefined | ReactNode>(undefined)
+    const { fromHierarchy }= props
     const location = useLocation()
     const { t } = useTranslation(['cluster', 'bma'])
 
     const [, setRoute] = useRecoilState(acmRouteState)
-    useEffect(() => setRoute(AcmRoute.Clusters), [setRoute])
+    if (!fromHierarchy) {
+        useEffect(() => setRoute(AcmRoute.Clusters), [setRoute])
+    } else {
+        useEffect(() => setRoute(AcmRoute.Clusters), [setRoute])
+    }
     return (
         <AcmPage
             hasDrawer
@@ -72,23 +85,14 @@ export default function ClusterManagementPage() {
                     }
                     navigation={
                         <AcmSecondaryNav>
+                            {fromHierarchy ?
                             <AcmSecondaryNavItem isActive={location.pathname.startsWith(NavigationPath.hierarchyClusters)}>
                                 <Link to={NavigationPath.hierarchyClusters}>{t('cluster:hierarchicalClusters')}</Link>
                             </AcmSecondaryNavItem>
+                            :
                             <AcmSecondaryNavItem isActive={location.pathname.startsWith(NavigationPath.clusters)}>
                                 <Link to={NavigationPath.clusters}>{t('cluster:clusters')}</Link>
-                            </AcmSecondaryNavItem>
-                            <AcmSecondaryNavItem isActive={location.pathname.startsWith(NavigationPath.clusterSets)}>
-                                <Link to={NavigationPath.clusterSets}>{t('cluster:clusterSets')}</Link>
-                            </AcmSecondaryNavItem>
-                            <AcmSecondaryNavItem isActive={location.pathname.startsWith(NavigationPath.clusterPools)}>
-                                <Link to={NavigationPath.clusterPools}>{t('cluster:clusterPools')}</Link>
-                            </AcmSecondaryNavItem>
-                            <AcmSecondaryNavItem
-                                isActive={location.pathname.startsWith(NavigationPath.discoveredClusters)}
-                            >
-                                <Link to={NavigationPath.discoveredClusters}>{t('cluster:clusters.discovered')}</Link>
-                            </AcmSecondaryNavItem>
+                            </AcmSecondaryNavItem>}
                         </AcmSecondaryNav>
                     }
                     actions={actions}

@@ -41,6 +41,7 @@
     "preview.machinePools": "<bold>Technology Preview</bold>: For more information, <a>view documentation</a> on Machine pools",
     "managed.emptyStateHeader": "You don't have any clusters.",
     "managed.emptyStateMsg": "Deploy a Leaf Hub with managed clusters.",
+    "hub.emptyStateMsg": "Deploy a Leaf Hub cluster.",
     "managed.clusterSets.emptyStateHeader": "You don't have any cluster sets.",
     "managed.clusterSets.emptyStateMsg": "Select <bold>Create cluster set</bold> to create a cluster set.",
     "managed.clusterPools.emptyStateHeader": "You don't have any cluster pools.",

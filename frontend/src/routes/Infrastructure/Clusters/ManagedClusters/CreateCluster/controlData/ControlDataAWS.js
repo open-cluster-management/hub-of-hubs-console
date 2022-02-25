@@ -636,6 +636,7 @@ const controlDataAWS = [
         active: true,
         available: [false, true],
         onSelect: onChangeACM,
+        hidden: true,
     },
     //Always Hidden
     {

@@ -92,14 +92,14 @@ export default function ClustersPage() {
                                 {
                                     id: 'createCluster',
                                     title: t('managed.createCluster'),
-                                    click: () => history.push(NavigationPath.createCluster),
+                                    click: () => history.push(NavigationPath.createHubCluster),
                                     isDisabled: !canCreateCluster,
                                     tooltip: t('common:rbac.unauthorized'),
                                 },
                                 {
                                     id: 'importCluster',
                                     title: t('managed.importCluster'),
-                                    click: () => history.push(NavigationPath.importCluster),
+                                    click: () => history.push(NavigationPath.importHubCluster),
                                     isDisabled: !canCreateCluster,
                                     tooltip: t('common:rbac.unauthorized'),
                                     variant: ButtonVariant.secondary,
@@ -111,11 +111,11 @@ export default function ClustersPage() {
                                     title={t('managed.emptyStateHeader')}
                                     message={
                                         <Trans
-                                            i18nKey={'cluster:managed.emptyStateMsg'}
+                                            i18nKey={'cluster:hub.emptyStateMsg'}
                                             components={{ bold: <strong /> }}
                                         />
                                     }
-                                    action={<AddCluster type="button" />}
+                                    action={<AddCluster type="button" fromHierarchy={true} />}
                                 />
                             }
                         />

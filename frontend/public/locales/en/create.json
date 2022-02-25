@@ -5,6 +5,7 @@
     "page.header.create-clusterPool.tooltip": "Create cluster pools across different providers.",
     "learn.more": "Learn more",
     "clusters": "Managed clusters",
+    "hierarchicalClusters": "Hub clusters",
     "clusterPools": "Cluster pools",
     "managed.createCluster": "Create cluster",
     "cluster.create.title": "Create cluster",

@@ -69,6 +69,8 @@ export default function CreateClusterPage() {
             providerConnection.metadata?.labels?.['cluster.open-cluster-management.io/type'] === 'ans'
     )
 
+    const fromHierarchy = location.pathname.startsWith(NavigationPath.createHubCluster)
+
     const [featureGateCache] = useRecoilState(featureGatesState)
 
     const [managedClusters] = useRecoilState(managedClustersState)
@@ -193,7 +195,7 @@ export default function CreateClusterPage() {
 
     // cancel button
     const cancelCreate = () => {
-        history.push(NavigationPath.clusters)
+        history.push(fromHierarchy ? NavigationPath.hierarchyClusters : NavigationPath.clusters)
     }
 
     // pause creation to create something else
@@ -308,10 +310,18 @@ export default function CreateClusterPage() {
                             </a>
                         </>
                     }
-                    breadcrumb={[
-                        { text: t('clusters'), to: NavigationPath.hierarchyClusters },
-                        { text: t('page.header.create-cluster'), to: '' },
-                    ]}
+                    breadcrumb={
+                        fromHierarchy ? 
+                        [
+                            { text: t('hierarchicalClusters'), to: NavigationPath.hierarchyClusters },
+                            { text: t('page.header.create-cluster'), to: '' },
+                        ]
+                        :
+                        [
+                            { text: t('clusters'), to: NavigationPath.clusters },
+                            { text: t('page.header.create-cluster'), to: '' },
+                        ]
+                    }
                     switches={switches}
                     actions={portals}
                 />
