@@ -177,7 +177,7 @@ export function mapClusters(
                     aci.metadata.name === clusterDeployment?.spec?.clusterInstallRef?.name
             )
         if (!!isFromHierarchical) {
-            const managedClusterManagedBy = managedCluster?.metadata?.annotations?.["open-cluster-management/managed-by"]
+            let managedClusterManagedBy = managedCluster?.metadata?.annotations?.["open-cluster-management/managed-by"]
             if (managedClusterManagedBy === undefined) {
                 return getHierarchicalCluster(
                     managedClusterInfos,
@@ -197,6 +197,10 @@ export function mapClusters(
                 )
             }
         } else {
+            let managedClusterManagedBy = managedCluster?.metadata?.annotations?.["open-cluster-management/managed-by-hoh"]
+            if (managedClusterManagedBy !== undefined && managedClusterManagedBy === 'true') {
+                return
+            }
             return getCluster(
                 managedClusterInfo,
                 clusterDeployment,

@@ -253,6 +253,11 @@ export function ImportClusterPageContent() {
                                     'open-cluster-management/created-via': 'discovery',
                                 }
                             }
+                            // add open-cluster-management/managed-by: hoh annotation
+                            let fromHierarchy = location.pathname.startsWith(NavigationPath.importHubCluster)
+                            if (fromHierarchy) {
+                                clusterAnnotations['open-cluster-management/managed-by-hoh'] = 'true'
+                            }
                             const createdResources: IResource[] = []
                             return new Promise(async (resolve, reject) => {
                                 try {

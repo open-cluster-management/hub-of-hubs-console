@@ -62,6 +62,7 @@ export function startWatching(): void {
     watchResource(token, 'cluster.open-cluster-management.io/v1beta1', 'clusterCurators')
     watchResource(token, 'cluster.open-cluster-management.io/v1alpha1', 'managedClusterSets')
     watchResource(token, 'cluster.open-cluster-management.io/v1alpha1', 'managedClusterSetBindings')
+    watchResource(token, 'cluster.open-cluster-management.io/v1', 'managedClusters')
     watchRestResource(token, 'managedclusters')
     watchResource(token, 'internal.open-cluster-management.io/v1beta1', 'managedClusterInfos')
     watchResource(token, 'inventory.open-cluster-management.io/v1alpha1', 'bareMetalAssets')
