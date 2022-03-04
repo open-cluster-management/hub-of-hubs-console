@@ -50,7 +50,6 @@ export function useAllClusters(fromHierarchical: boolean | false) {
                 clusterClaims,
                 clusterCurators,
                 agentClusterInstalls,
-                manifestworks,
                 fromHierarchical
             ),
         [

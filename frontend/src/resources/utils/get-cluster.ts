@@ -160,8 +160,7 @@ export function mapClusters(
     clusterClaims: ClusterClaim[] = [],
     clusterCurators: ClusterCurator[] = [],
     agentClusterInstalls: CIM.AgentClusterInstallK8sResource[] = [],
-    manifestworks: ManifestWork[] = [],
-    fromHierarchical: boolean | false
+    fromHierarchical: boolean = false
 ) {
     const mcs = managedClusters.filter((mc) => mc.metadata?.name) ?? []
     const uniqueClusterNames = Array.from(
@@ -185,7 +184,6 @@ export function mapClusters(
                     aci.metadata.namespace === clusterDeployment.metadata.namespace &&
                     aci.metadata.name === clusterDeployment?.spec?.clusterInstallRef?.name
             )
-        const mws = manifestworks?.filter((mw) => mw.metadata?.namespace === cluster)
         if (!!fromHierarchical) {
             let managedClusterManagedBy = managedCluster?.metadata?.annotations?.["open-cluster-management/managed-by"]
             if (managedClusterManagedBy === undefined) {
@@ -220,7 +218,6 @@ export function mapClusters(
                 clusterClaim,
                 clusterCurator,
                 agentClusterInstall,
-                mws,
             )
         }
     })
@@ -465,12 +462,13 @@ export function getACMDistribution(
     let version, channel = ""
     for (const manifestwork of manifestworks) {
         for (const manifest of manifestwork?.status?.resourceStatus?.manifests) {
-            if (manifest.resourceMeta.kind == "Subscription" && 
-                manifest.resourceMeta.group === "operators.coreos.com") {
+            if (manifest.resourceMeta.kind == "MultiClusterHub" && 
+                manifest.resourceMeta.group === "operator.open-cluster-management.io") {
                     if (manifest.statusFeedback.values !== undefined) {
                         for (const value of manifest.statusFeedback.values) {
                             if (value.name === "currentVersion") {
                                 version = value.fieldValue.string
+                                channel = `release-` + version.substring(0, version.lastIndexOf('.'))
                             }
                         }
                     }

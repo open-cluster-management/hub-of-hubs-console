@@ -41,6 +41,7 @@ import {
     agentClusterInstallsState,
     agentsState,
     infraEnvironmentsState,
+    manifestWorksState,
 } from '../../../../../atoms'
 import { ErrorPage } from '../../../../../components/ErrorPage'
 import { usePrevious } from '../../../../../components/usePrevious'
@@ -90,6 +91,7 @@ export default function ClusterDetailsPage({ match }: RouteComponentProps<{ id: 
         agentClusterInstalls,
         agents,
         infraEnvs,
+        manifestWorks
     ] = useRecoilValue(
         waitForAll([
             managedClustersState,
@@ -103,6 +105,7 @@ export default function ClusterDetailsPage({ match }: RouteComponentProps<{ id: 
             agentClusterInstallsState,
             agentsState,
             infraEnvironmentsState,
+            manifestWorksState
         ])
     )
 
@@ -129,6 +132,8 @@ export default function ClusterDetailsPage({ match }: RouteComponentProps<{ id: 
             ie.metadata.namespace === clusterDeployment?.metadata.namespace
     )
 
+    const mws = manifestWorks?.filter((mw) => mw.metadata?.namespace === match.params.id)
+
     const fromHierarchy = location.pathname.startsWith(NavigationPath.hubClusterDetails.replace(':id', match.params.id as string))
 
     const clusterExists = !!managedCluster || !!clusterDeployment || !!managedClusterInfo
@@ -141,7 +146,8 @@ export default function ClusterDetailsPage({ match }: RouteComponentProps<{ id: 
         clusterAddons,
         clusterClaim,
         clusterCurator,
-        agentClusterInstall
+        agentClusterInstall,
+        mws
     )
     const prevCluster = usePrevious(cluster)
     const showMachinePoolTab = cluster.isHive && cluster.isManaged && cluster.provider !== Provider.baremetal

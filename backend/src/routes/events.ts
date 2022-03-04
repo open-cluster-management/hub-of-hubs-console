@@ -97,7 +97,7 @@ export function startWatching(): void {
             'metadata.name': 'insight-content-data',
         },
     })
-    watchResource(token, 'work.open-cluster-management.io/v1', 'ManifestWork', {
+    watchResource(token, 'work.open-cluster-management.io/v1', 'ManifestWorks', {
         labelSelector: { 'hub-of-hubs.open-cluster-management.io/managed-by': 'hoh' },
     })
     watchResource(token, 'extensions.hive.openshift.io/v1beta1', 'agentclusterinstalls')
