@@ -64,6 +64,7 @@ export default function App() {
                             <Suspense fallback={<LoadingPage />}>
                                 <Switch>
                                     <Route path={NavigationPath.clusterDetails} component={ClusterDetailsPage} />
+                                    <Route path={NavigationPath.hubClusterDetails} component={ClusterDetailsPage} />
                                     <Route path={NavigationPath.clusterSetDetails} component={ClusterSetDetailsPage} />
                                     <Route
                                         exact

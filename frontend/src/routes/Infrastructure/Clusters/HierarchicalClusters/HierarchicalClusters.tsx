@@ -258,7 +258,7 @@ export function ClustersTable(props: {
                         cell: (cluster) => (
                             <>
                                 <span style={{ whiteSpace: 'nowrap' }}>
-                                    <Link to={NavigationPath.clusterDetails.replace(':id', cluster.name as string)}>
+                                    <Link to={NavigationPath.hubClusterDetails.replace(':id', cluster.name as string)}>
                                         {cluster.displayName}
                                     </Link>
                                 </span>

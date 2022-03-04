@@ -8,6 +8,7 @@ import { ClusterClaim } from '../cluster-claim'
 import { ClusterCurator } from '../cluster-curator'
 import { ClusterDeployment } from '../cluster-deployment'
 import { ManagedCluster } from '../managed-cluster'
+import { ManifestWork } from '../manifestwork'
 import { ManagedClusterAddOn } from '../managed-cluster-add-on'
 import { ManagedClusterInfo, NodeInfo, OpenShiftDistributionInfo } from '../managed-cluster-info'
 import { managedClusterSetLabel } from '../managed-cluster-set'
@@ -69,6 +70,8 @@ export type Cluster = {
     nodes?: Nodes
     kubeApiServer?: string
     consoleURL?: string
+    acmConsoleURL?: string
+    acmDistribution?: ACMDistribution
     hive: {
         clusterPool?: string
         clusterPoolNamespace?: string
@@ -94,6 +97,11 @@ export type DistributionInfo = {
     displayVersion?: string
     isManagedOpenShift: boolean
     upgradeInfo?: UpgradeInfo
+}
+
+export type ACMDistribution = {
+    version?: string
+    channel?: string
 }
 
 export type HiveSecrets = {
@@ -152,7 +160,8 @@ export function mapClusters(
     clusterClaims: ClusterClaim[] = [],
     clusterCurators: ClusterCurator[] = [],
     agentClusterInstalls: CIM.AgentClusterInstallK8sResource[] = [],
-    isFromHierarchical: boolean | false
+    manifestworks: ManifestWork[] = [],
+    fromHierarchical: boolean | false
 ) {
     const mcs = managedClusters.filter((mc) => mc.metadata?.name) ?? []
     const uniqueClusterNames = Array.from(
@@ -176,7 +185,8 @@ export function mapClusters(
                     aci.metadata.namespace === clusterDeployment.metadata.namespace &&
                     aci.metadata.name === clusterDeployment?.spec?.clusterInstallRef?.name
             )
-        if (!!isFromHierarchical) {
+        const mws = manifestworks?.filter((mw) => mw.metadata?.namespace === cluster)
+        if (!!fromHierarchical) {
             let managedClusterManagedBy = managedCluster?.metadata?.annotations?.["open-cluster-management/managed-by"]
             if (managedClusterManagedBy === undefined) {
                 return getHierarchicalCluster(
@@ -209,7 +219,8 @@ export function mapClusters(
                 addons,
                 clusterClaim,
                 clusterCurator,
-                agentClusterInstall
+                agentClusterInstall,
+                mws,
             )
         }
     })
@@ -223,7 +234,8 @@ export function getCluster(
     managedClusterAddOns: ManagedClusterAddOn[],
     clusterClaim: ClusterClaim | undefined,
     clusterCurator: ClusterCurator | undefined,
-    agentClusterInstall: CIM.AgentClusterInstallK8sResource | undefined
+    agentClusterInstall: CIM.AgentClusterInstallK8sResource | undefined,
+    manifestworks: ManifestWork[] = []
 ): Cluster {
     const { status, statusMessage } = getClusterStatus(
         clusterDeployment,
@@ -247,6 +259,7 @@ export function getCluster(
         statusMessage,
         provider: getProvider(managedClusterInfo, managedCluster, clusterDeployment),
         distribution: getDistributionInfo(managedClusterInfo, managedCluster, clusterDeployment, clusterCurator),
+        acmDistribution : getACMDistribution(manifestworks),
         labels: managedCluster?.metadata.labels ?? managedClusterInfo?.metadata.labels,
         nodes: getNodes(managedClusterInfo),
         kubeApiServer: getKubeApiServer(clusterDeployment, managedClusterInfo),
@@ -443,6 +456,30 @@ export function getOwner(clusterDeployment?: ClusterDeployment, clusterClaim?: C
     return {
         createdBy: decode(cdUserIdentity),
         claimedBy: decode(ccUserIdentity),
+    }
+}
+
+export function getACMDistribution(
+    manifestworks: ManifestWork[] = [],
+) : ACMDistribution {
+    let version, channel = ""
+    for (const manifestwork of manifestworks) {
+        for (const manifest of manifestwork?.status?.resourceStatus?.manifests) {
+            if (manifest.resourceMeta.kind == "Subscription" && 
+                manifest.resourceMeta.group === "operators.coreos.com") {
+                    if (manifest.statusFeedback.values !== undefined) {
+                        for (const value of manifest.statusFeedback.values) {
+                            if (value.name === "currentVersion") {
+                                version = value.fieldValue.string
+                            }
+                        }
+                    }
+            }
+        }
+    }
+    return {
+        version: version,
+        channel: channel
     }
 }
 
