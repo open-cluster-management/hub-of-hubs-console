@@ -232,26 +232,6 @@ export function ClustersTable(props: {
                         ),
                     },
                     {
-                        header: t('table.provider'),
-                        sort: 'provider',
-                        search: 'provider',
-                        cell: (cluster) =>
-                            cluster?.provider ? <AcmInlineProvider provider={cluster?.provider} /> : '-',
-                    },
-                    {
-                        header: t('table.distribution'),
-                        sort: 'distribution.displayVersion',
-                        search: 'distribution.displayVersion',
-                        cell: (cluster) => (
-                            <DistributionField
-                                cluster={cluster}
-                                clusterCurator={clusterCurators.find(
-                                    (curator) => curator.metadata.name === cluster.name
-                                )}
-                            />
-                        ),
-                    },
-                    {
                         header: t('table.labels'),
                         search: (cluster) =>
                             cluster.labels
