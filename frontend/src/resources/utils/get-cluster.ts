@@ -18,6 +18,8 @@ import { AgentClusterInstallKind } from '../agent-cluster-install'
 
 const { isDraft } = CIM
 
+export const HoHManagedByAnnotation = 'hub-of-hubs.open-cluster-management.io/managed-by'
+
 export enum ClusterStatus {
     'pending' = 'pending',
     'destroying' = 'destroying',
@@ -185,7 +187,7 @@ export function mapClusters(
                     aci.metadata.name === clusterDeployment?.spec?.clusterInstallRef?.name
             )
         if (!!fromHierarchical) {
-            let managedClusterManagedBy = managedCluster?.metadata?.annotations?.["open-cluster-management/managed-by"]
+            let managedClusterManagedBy = managedCluster?.metadata?.annotations?.[HoHManagedByAnnotation]
             if (managedClusterManagedBy === undefined) {
                 return getHierarchicalCluster(
                     managedClusterInfos,
@@ -205,7 +207,7 @@ export function mapClusters(
                 )
             }
         } else {
-            let managedClusterManagedBy = managedCluster?.metadata?.annotations?.["open-cluster-management/managed-by-hoh"]
+            let managedClusterManagedBy = managedCluster?.metadata?.annotations?.[HoHManagedByAnnotation]
             if (managedClusterManagedBy !== undefined && managedClusterManagedBy === 'true') {
                 return
             }
@@ -349,7 +351,7 @@ export function getManagedClusters(
     clusterCurators: ClusterCurator[] = [],
     agentClusterInstalls: CIM.AgentClusterInstallK8sResource[] = []
 ) {
-    const managedByClusters = managedClusters.filter((mc) => mcName === mc?.metadata?.annotations?.["open-cluster-management/managed-by"]) ?? []
+    const managedByClusters = managedClusters.filter((mc) => mcName === mc?.metadata?.annotations?.[HoHManagedByAnnotation]) ?? []
     const uniqueClusterNames = Array.from(
         new Set([
             ...managedByClusters.map((mc) => mc.metadata.name),
