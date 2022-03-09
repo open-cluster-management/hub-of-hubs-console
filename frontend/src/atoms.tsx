@@ -206,9 +206,6 @@ export function LoadData(props: { children?: ReactNode }) {
                 setter((resources) => {
                     const newResources = [...resources]
                     for (const data of dataToProcess) {
-                        if (data.object?.kind === 'ManagedCluster') {
-                            console.log(data.object?.kind)
-                        }
                         if (data.object?.kind === kind) {
                             const index = newResources.findIndex(
                                 (resource) =>
