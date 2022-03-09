@@ -36,9 +36,12 @@ import AIClusterDetails from '../../components/cim/AIClusterDetails'
 
 export function ClusterOverviewPageContent(props: { canGetSecret?: boolean }) {
     const { cluster, clusterCurator } = useContext(ClusterContext)
+    cluster!.acmConsoleURL = cluster?.consoleURL?.replace('console-openshift', 'multicloud')
+
     const { t } = useTranslation(['cluster', 'common'])
     const [showEditLabels, setShowEditLabels] = useState<boolean>(false)
     const [showChannelSelectModal, setShowChannelSelectModal] = useState<boolean>(false)
+    const fromHierarchy = location.pathname.startsWith(NavigationPath.hubClusterOverview.replace(':id', cluster!.name as string))
 
     let leftItems = [
         {
@@ -138,6 +141,18 @@ export function ClusterOverviewPageContent(props: { canGetSecret?: boolean }) {
         },
 
         {
+            filterKey: 'acmDistribution',
+            key: t('table.acm.distribution'),
+            value: cluster?.acmDistribution?.version,
+        },
+
+        {
+            filterKey: 'acmChannel',
+            key: t('table.acm.channel'),
+            value: cluster?.acmDistribution?.channel,
+        },
+
+        {
             key: t('table.labels'),
             value: cluster?.labels && <AcmLabels labels={cluster?.labels} />,
             keyAction: cluster?.isManaged && (
@@ -155,6 +170,86 @@ export function ClusterOverviewPageContent(props: { canGetSecret?: boolean }) {
     // should only show channel for ocp clusters with version
     if (!cluster?.distribution?.ocp?.version) {
         leftItems = leftItems.filter((item) => item.filterKey !== 'channel')
+    }
+
+    let rightItems = [
+        {
+            key: t('table.kubeApiServer'),
+            value: cluster?.kubeApiServer && (
+                <AcmInlineCopy text={cluster?.kubeApiServer} id="kube-api-server" />
+            ),
+        },
+        {
+            key: t('table.consoleUrl'),
+            value: cluster?.consoleURL && (
+                <AcmButton
+                    variant="link"
+                    isInline
+                    onClick={() => window.open(cluster.consoleURL!, '_blank')}
+                    isDisabled={cluster.status === ClusterStatus.hibernating}
+                    tooltip={t('hibernating.tooltip')}
+                    icon={<ExternalLinkAltIcon />}
+                    iconPosition="right"
+                >
+                    {cluster?.consoleURL}
+                </AcmButton>
+            ),
+        },
+        {
+            filterKey: 'acmConsole',
+            key: t('table.acm.consoleUrl'),
+            value: cluster?.acmConsoleURL && (
+                <AcmButton
+                    variant="link"
+                    isInline
+                    onClick={() => window.open(cluster.acmConsoleURL!, '_blank')}
+                    icon={<ExternalLinkAltIcon />}
+                    iconPosition="right"
+                >
+                    {cluster?.acmConsoleURL}
+                </AcmButton>
+            ),
+        },
+        {
+            key: t('table.clusterId'),
+            value: cluster?.labels?.clusterID && (
+                <>
+                    <div>{cluster?.labels?.clusterID}</div>
+                    <a
+                        href={`https://cloud.redhat.com/openshift/details/${cluster?.labels?.clusterID}`}
+                        target="_blank"
+                        rel="noreferrer"
+                    >
+                        {t('common:openshift.cluster.manager')} <ExternalLinkAltIcon />
+                    </a>
+                </>
+            ),
+        },
+        {
+            key: t('table.credentials'),
+            value: <LoginCredentials canGetSecret={props.canGetSecret} />,
+        },
+        {
+            key: cluster?.owner.claimedBy ? t('table.claimedBy') : t('table.createdBy'),
+            value: cluster?.owner.claimedBy ?? cluster?.owner.createdBy,
+        },
+        {
+            key: t('table.clusterSet'),
+            value: cluster?.clusterSet! && (
+                <Link to={NavigationPath.clusterSetOverview.replace(':id', cluster?.clusterSet!)}>
+                    {cluster?.clusterSet}
+                </Link>
+            ),
+        },
+        {
+            key: t('table.clusterPool'),
+            value: cluster?.hive?.clusterPool,
+        },
+    ]
+
+    if (!fromHierarchy) {
+        leftItems = leftItems.filter((item) => (item.filterKey !== 'acmChannel' && item.filterKey !== 'acmDistribution'))
+        rightItems = rightItems.filter((item) => (item.filterKey !== 'acmConsole'))
     }
 
     const isHybrid = cluster?.provider === Provider.hybrid
@@ -180,65 +275,7 @@ export function ClusterOverviewPageContent(props: { canGetSecret?: boolean }) {
                 <AcmDescriptionList
                     title={t('table.details')}
                     leftItems={leftItems}
-                    rightItems={[
-                        {
-                            key: t('table.kubeApiServer'),
-                            value: cluster?.kubeApiServer && (
-                                <AcmInlineCopy text={cluster?.kubeApiServer} id="kube-api-server" />
-                            ),
-                        },
-                        {
-                            key: t('table.consoleUrl'),
-                            value: cluster?.consoleURL && (
-                                <AcmButton
-                                    variant="link"
-                                    isInline
-                                    onClick={() => window.open(cluster.consoleURL!, '_blank')}
-                                    isDisabled={cluster.status === ClusterStatus.hibernating}
-                                    tooltip={t('hibernating.tooltip')}
-                                    icon={<ExternalLinkAltIcon />}
-                                    iconPosition="right"
-                                >
-                                    {cluster?.consoleURL}
-                                </AcmButton>
-                            ),
-                        },
-                        {
-                            key: t('table.clusterId'),
-                            value: cluster?.labels?.clusterID && (
-                                <>
-                                    <div>{cluster?.labels?.clusterID}</div>
-                                    <a
-                                        href={`https://cloud.redhat.com/openshift/details/${cluster?.labels?.clusterID}`}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                    >
-                                        {t('common:openshift.cluster.manager')} <ExternalLinkAltIcon />
-                                    </a>
-                                </>
-                            ),
-                        },
-                        {
-                            key: t('table.credentials'),
-                            value: <LoginCredentials canGetSecret={props.canGetSecret} />,
-                        },
-                        {
-                            key: cluster?.owner.claimedBy ? t('table.claimedBy') : t('table.createdBy'),
-                            value: cluster?.owner.claimedBy ?? cluster?.owner.createdBy,
-                        },
-                        {
-                            key: t('table.clusterSet'),
-                            value: cluster?.clusterSet! && (
-                                <Link to={NavigationPath.clusterSetOverview.replace(':id', cluster?.clusterSet!)}>
-                                    {cluster?.clusterSet}
-                                </Link>
-                            ),
-                        },
-                        {
-                            key: t('table.clusterPool'),
-                            value: cluster?.hive?.clusterPool,
-                        },
-                    ]}
+                    rightItems={rightItems}
                 />
                 {isHybrid && <AIClusterDetails />}
                 {cluster!.isManaged &&

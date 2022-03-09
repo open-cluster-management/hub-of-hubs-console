@@ -40,16 +40,25 @@ import { useCanJoinClusterSets, useMustJoinClusterSet } from '../../ClusterSets/
 import { ImportCommand, pollImportYamlSecret } from '../components/ImportCommand'
 
 export default function ImportClusterPage() {
+    const fromHierarchy = location.pathname.startsWith(NavigationPath.importHubCluster)
     const { t } = useTranslation(['cluster'])
     return (
         <AcmPage
             header={
                 <AcmPageHeader
                     title={t('page.header.import-cluster')}
-                    breadcrumb={[
-                        { text: t('clusters'), to: NavigationPath.clusters },
-                        { text: t('page.header.import-cluster'), to: '' },
-                    ]}
+                    breadcrumb={
+                        fromHierarchy ? 
+                        [
+                            { text: t('hierarchicalClusters'), to: NavigationPath.hierarchyClusters },
+                            { text: t('page.header.import-cluster'), to: '' },
+                        ]
+                        :
+                        [
+                            { text: t('clusters'), to: NavigationPath.clusters },
+                            { text: t('page.header.import-cluster'), to: '' },
+                        ]
+                    }
                     titleTooltip={
                         <>
                             {t('page.header.import-cluster.tooltip')}
@@ -97,6 +106,7 @@ export function ImportClusterPageContent() {
     const [kubeConfig, setKubeConfig] = useState<string | undefined>()
     const [importMode, setImportMode] = useState<ImportMode>(ImportMode.manual)
     const [discovered] = useState<boolean>(sessionStorage.getItem('DiscoveredClusterDisplayName') ? true : false)
+    const fromHierarchy = location.pathname.startsWith(NavigationPath.importHubCluster)
 
     const onReset = () => {
         setClusterName('')
@@ -243,6 +253,11 @@ export function ImportClusterPageContent() {
                                     'open-cluster-management/created-via': 'discovery',
                                 }
                             }
+                            // add hub-of-hubs.open-cluster-management.io/managed-by-hoh: 'true' annotation
+                            let fromHierarchy = location.pathname.startsWith(NavigationPath.importHubCluster)
+                            if (fromHierarchy) {
+                                clusterAnnotations['hub-of-hubs.open-cluster-management.io/managed-by-hoh'] = 'true'
+                            }
                             const createdResources: IResource[] = []
                             return new Promise(async (resolve, reject) => {
                                 try {
@@ -336,7 +351,7 @@ export function ImportClusterPageContent() {
                             {t('import.importmode.importsaved')}
                         </Label>
                     ) : (
-                        <Link to={NavigationPath.clusters} id="cancel">
+                        <Link to={fromHierarchy ? NavigationPath.hierarchyClusters : NavigationPath.clusters} id="cancel">
                             <Button variant="link">{t('common:cancel')}</Button>
                         </Link>
                     )}

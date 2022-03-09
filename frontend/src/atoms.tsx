@@ -40,6 +40,8 @@ import {
     ManagedClusterSetBinding,
     ManagedClusterSetBindingKind,
     ManagedClusterSetKind,
+    ManifestWork,
+    ManifestWorkKind,
     MultiClusterHub,
     MultiClusterHubKind,
     Namespace,
@@ -89,6 +91,7 @@ export const managedClusterSetBindingsState = atom<ManagedClusterSetBinding[]>({
     key: 'managedClusterSetBindings',
     default: [],
 })
+export const manifestWorksState = atom<ManifestWork[]>({ key: 'manifestWorks', default: [] })
 export const multiClusterHubState = atom<MultiClusterHub[]>({ key: 'multiClusterHubs', default: [] })
 export const namespacesState = atom<Namespace[]>({ key: 'namespaces', default: [] })
 export const policyreportState = atom<PolicyReport[]>({ key: 'policyreports', default: [] })
@@ -148,6 +151,7 @@ export function LoadData(props: { children?: ReactNode }) {
     const [, setManagedClusterInfos] = useRecoilState(managedClusterInfosState)
     const [, setManagedClusterSets] = useRecoilState(managedClusterSetsState)
     const [, setManagedClusterSetBindings] = useRecoilState(managedClusterSetBindingsState)
+    const [, setManifestWorks] = useRecoilState(manifestWorksState)
     const [, setMultiClusterHubs] = useRecoilState(multiClusterHubState)
     const [, setNamespaces] = useRecoilState(namespacesState)
     const [, setPolicyReports] = useRecoilState(policyreportState)
@@ -183,6 +187,7 @@ export function LoadData(props: { children?: ReactNode }) {
         [ManagedClusterInfoKind]: setManagedClusterInfos,
         [ManagedClusterSetKind]: setManagedClusterSets,
         [ManagedClusterSetBindingKind]: setManagedClusterSetBindings,
+        [ManifestWorkKind]: setManifestWorks,
         [MultiClusterHubKind]: setMultiClusterHubs,
         [NamespaceKind]: setNamespaces,
         [PolicyReportKind]: setPolicyReports,

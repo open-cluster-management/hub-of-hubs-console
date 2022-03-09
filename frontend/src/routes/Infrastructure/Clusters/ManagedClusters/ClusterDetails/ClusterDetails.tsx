@@ -41,6 +41,7 @@ import {
     agentClusterInstallsState,
     agentsState,
     infraEnvironmentsState,
+    manifestWorksState,
 } from '../../../../../atoms'
 import { ErrorPage } from '../../../../../components/ErrorPage'
 import { usePrevious } from '../../../../../components/usePrevious'
@@ -90,6 +91,7 @@ export default function ClusterDetailsPage({ match }: RouteComponentProps<{ id: 
         agentClusterInstalls,
         agents,
         infraEnvs,
+        manifestWorks
     ] = useRecoilValue(
         waitForAll([
             managedClustersState,
@@ -103,6 +105,7 @@ export default function ClusterDetailsPage({ match }: RouteComponentProps<{ id: 
             agentClusterInstallsState,
             agentsState,
             infraEnvironmentsState,
+            manifestWorksState
         ])
     )
 
@@ -129,6 +132,10 @@ export default function ClusterDetailsPage({ match }: RouteComponentProps<{ id: 
             ie.metadata.namespace === clusterDeployment?.metadata.namespace
     )
 
+    const mws = manifestWorks?.filter((mw) => mw.metadata?.namespace === match.params.id)
+
+    const fromHierarchy = location.pathname.startsWith(NavigationPath.hubClusterDetails.replace(':id', match.params.id as string))
+
     const clusterExists = !!managedCluster || !!clusterDeployment || !!managedClusterInfo
 
     const cluster = getCluster(
@@ -139,7 +146,8 @@ export default function ClusterDetailsPage({ match }: RouteComponentProps<{ id: 
         clusterAddons,
         clusterClaim,
         clusterCurator,
-        agentClusterInstall
+        agentClusterInstall,
+        mws
     )
     const prevCluster = usePrevious(cluster)
     const showMachinePoolTab = cluster.isHive && cluster.isManaged && cluster.provider !== Provider.baremetal
@@ -191,10 +199,18 @@ export default function ClusterDetailsPage({ match }: RouteComponentProps<{ id: 
                 hasDrawer
                 header={
                     <AcmPageHeader
-                        breadcrumb={[
-                            { text: t('clusters'), to: NavigationPath.clusters },
-                            { text: cluster.displayName!, to: '' },
-                        ]}
+                        breadcrumb={
+                            fromHierarchy ?
+                            [
+                                { text: t('hierarchicalClusters'), to: NavigationPath.hierarchyClusters },
+                                { text: cluster.displayName!, to: '' },
+                            ]
+                            :
+                            [
+                                { text: t('clusters'), to: NavigationPath.clusters },
+                                { text: cluster.displayName!, to: '' },
+                            ]
+                        }
                         title={cluster.displayName!}
                         description={
                             cluster.hive.clusterClaimName && (
@@ -207,11 +223,11 @@ export default function ClusterDetailsPage({ match }: RouteComponentProps<{ id: 
                             <AcmSecondaryNav>
                                 <AcmSecondaryNavItem
                                     isActive={
-                                        location.pathname ===
-                                        NavigationPath.clusterOverview.replace(':id', match.params.id)
+                                        location.pathname === NavigationPath.clusterOverview.replace(':id', match.params.id) ||
+                                        location.pathname === NavigationPath.hubClusterOverview.replace(':id', match.params.id)
                                     }
                                 >
-                                    <Link to={NavigationPath.clusterOverview.replace(':id', match.params.id)}>
+                                    <Link to={fromHierarchy ? NavigationPath.hubClusterOverview.replace(':id', match.params.id) : NavigationPath.clusterOverview.replace(':id', match.params.id)}>
                                         {t('tab.overview')}
                                     </Link>
                                 </AcmSecondaryNavItem>
@@ -272,6 +288,9 @@ export default function ClusterDetailsPage({ match }: RouteComponentProps<{ id: 
                         <Route exact path={NavigationPath.clusterOverview}>
                             <ClusterOverviewPageContent canGetSecret={canGetSecret} />
                         </Route>
+                        <Route exact path={NavigationPath.hubClusterOverview}>
+                            <ClusterOverviewPageContent canGetSecret={canGetSecret} />
+                        </Route>
                         <Route exact path={NavigationPath.clusterNodes}>
                             <NodePoolsPageContent />
                         </Route>
@@ -285,6 +304,9 @@ export default function ClusterDetailsPage({ match }: RouteComponentProps<{ id: 
                         </Route>
                         <Route exact path={NavigationPath.clusterDetails}>
                             <Redirect to={NavigationPath.clusterOverview.replace(':id', match.params.id)} />
+                        </Route>
+                        <Route exact path={NavigationPath.hubClusterDetails}>
+                            <Redirect to={NavigationPath.hubClusterOverview.replace(':id', match.params.id)} />
                         </Route>
                     </Switch>
                 </Suspense>

@@ -64,6 +64,7 @@ export default function App() {
                             <Suspense fallback={<LoadingPage />}>
                                 <Switch>
                                     <Route path={NavigationPath.clusterDetails} component={ClusterDetailsPage} />
+                                    <Route path={NavigationPath.hubClusterDetails} component={ClusterDetailsPage} />
                                     <Route path={NavigationPath.clusterSetDetails} component={ClusterSetDetailsPage} />
                                     <Route
                                         exact
@@ -71,7 +72,9 @@ export default function App() {
                                         component={CreateClusterPoolPage}
                                     />
                                     <Route exact path={NavigationPath.createCluster} component={CreateClusterPage} />
+                                    <Route exact path={NavigationPath.createHubCluster} component={CreateClusterPage} />
                                     <Route exact path={NavigationPath.importCluster} component={ImportClusterPage} />
+                                    <Route exact path={NavigationPath.importHubCluster} component={ImportClusterPage} />
                                     <Route exact path={NavigationPath.credentials} component={CredentialsPage} />
                                     <Route exact path={NavigationPath.addCredentials} component={CredentialPage} />
                                     <Route exact path={NavigationPath.editCredentials} component={CredentialPage} />
@@ -122,6 +125,7 @@ export default function App() {
                                     {process.env.NODE_ENV === 'development' && (
                                         <Route exact path="/multicloud/example" component={ExampleForm} />
                                     )}
+                                    <Route exact path={NavigationPath.hierarchyClusters} component={ClusterManagementPage} />
                                     <Route path={NavigationPath.console} component={ClusterManagementPage} />
                                     <Route exact path="*">
                                         <Redirect to={NavigationPath.console} />

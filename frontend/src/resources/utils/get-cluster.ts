@@ -8,6 +8,7 @@ import { ClusterClaim } from '../cluster-claim'
 import { ClusterCurator } from '../cluster-curator'
 import { ClusterDeployment } from '../cluster-deployment'
 import { ManagedCluster } from '../managed-cluster'
+import { ManifestWork } from '../manifestwork'
 import { ManagedClusterAddOn } from '../managed-cluster-add-on'
 import { ManagedClusterInfo, NodeInfo, OpenShiftDistributionInfo } from '../managed-cluster-info'
 import { managedClusterSetLabel } from '../managed-cluster-set'
@@ -16,6 +17,8 @@ import { getLatest } from './utils'
 import { AgentClusterInstallKind } from '../agent-cluster-install'
 
 const { isDraft } = CIM
+
+export const HoHManagedByAnnotation = 'hub-of-hubs.open-cluster-management.io/managed-by'
 
 export enum ClusterStatus {
     'pending' = 'pending',
@@ -69,6 +72,8 @@ export type Cluster = {
     nodes?: Nodes
     kubeApiServer?: string
     consoleURL?: string
+    acmConsoleURL?: string
+    acmDistribution?: ACMDistribution
     hive: {
         clusterPool?: string
         clusterPoolNamespace?: string
@@ -85,6 +90,7 @@ export type Cluster = {
         createdBy?: string
         claimedBy?: string
     }
+    managedClusters?: Cluster[]
 }
 
 export type DistributionInfo = {
@@ -93,6 +99,11 @@ export type DistributionInfo = {
     displayVersion?: string
     isManagedOpenShift: boolean
     upgradeInfo?: UpgradeInfo
+}
+
+export type ACMDistribution = {
+    version?: string
+    channel?: string
 }
 
 export type HiveSecrets = {
@@ -150,7 +161,8 @@ export function mapClusters(
     managedClusterAddOns: ManagedClusterAddOn[] = [],
     clusterClaims: ClusterClaim[] = [],
     clusterCurators: ClusterCurator[] = [],
-    agentClusterInstalls: CIM.AgentClusterInstallK8sResource[] = []
+    agentClusterInstalls: CIM.AgentClusterInstallK8sResource[] = [],
+    fromHierarchical: boolean = false
 ) {
     const mcs = managedClusters.filter((mc) => mc.metadata?.name) ?? []
     const uniqueClusterNames = Array.from(
@@ -174,16 +186,42 @@ export function mapClusters(
                     aci.metadata.namespace === clusterDeployment.metadata.namespace &&
                     aci.metadata.name === clusterDeployment?.spec?.clusterInstallRef?.name
             )
-        return getCluster(
-            managedClusterInfo,
-            clusterDeployment,
-            certificateSigningRequests,
-            managedCluster,
-            addons,
-            clusterClaim,
-            clusterCurator,
-            agentClusterInstall
-        )
+        if (!!fromHierarchical) {
+            let managedClusterManagedBy = managedCluster?.metadata?.annotations?.[HoHManagedByAnnotation]
+            if (managedClusterManagedBy === undefined) {
+                return getHierarchicalCluster(
+                    managedClusterInfos,
+                    managedClusterInfo,
+                    clusterDeployments,
+                    clusterDeployment,
+                    certificateSigningRequests,
+                    managedClusters,
+                    managedCluster,
+                    addons,
+                    clusterClaims,
+                    clusterClaim,
+                    clusterCurators,
+                    clusterCurator,
+                    agentClusterInstalls,
+                    agentClusterInstall
+                )
+            }
+        } else {
+            let managedClusterManagedBy = managedCluster?.metadata?.annotations?.[HoHManagedByAnnotation]
+            if (managedClusterManagedBy !== undefined && managedClusterManagedBy === 'true') {
+                return
+            }
+            return getCluster(
+                managedClusterInfo,
+                clusterDeployment,
+                certificateSigningRequests,
+                managedCluster,
+                addons,
+                clusterClaim,
+                clusterCurator,
+                agentClusterInstall,
+            )
+        }
     })
 }
 
@@ -195,6 +233,62 @@ export function getCluster(
     managedClusterAddOns: ManagedClusterAddOn[],
     clusterClaim: ClusterClaim | undefined,
     clusterCurator: ClusterCurator | undefined,
+    agentClusterInstall: CIM.AgentClusterInstallK8sResource | undefined,
+    manifestworks: ManifestWork[] = []
+): Cluster {
+    const { status, statusMessage } = getClusterStatus(
+        clusterDeployment,
+        managedClusterInfo,
+        certificateSigningRequests,
+        managedCluster,
+        managedClusterAddOns,
+        clusterCurator,
+        agentClusterInstall
+    )
+    return {
+        name: clusterDeployment?.metadata.name ?? managedCluster?.metadata.name ?? managedClusterInfo?.metadata.name,
+        displayName:
+            // clusterDeployment?.spec?.clusterPoolRef?.claimName ??
+            clusterDeployment?.metadata.name ?? managedCluster?.metadata.name ?? managedClusterInfo?.metadata.name,
+        namespace:
+            managedCluster?.metadata.name ??
+            clusterDeployment?.metadata.namespace ??
+            managedClusterInfo?.metadata.namespace,
+        status,
+        statusMessage,
+        provider: getProvider(managedClusterInfo, managedCluster, clusterDeployment),
+        distribution: getDistributionInfo(managedClusterInfo, managedCluster, clusterDeployment, clusterCurator),
+        acmDistribution : getACMDistribution(manifestworks),
+        labels: managedCluster?.metadata.labels ?? managedClusterInfo?.metadata.labels,
+        nodes: getNodes(managedClusterInfo),
+        kubeApiServer: getKubeApiServer(clusterDeployment, managedClusterInfo),
+        consoleURL: getConsoleUrl(clusterDeployment, managedClusterInfo, managedCluster),
+        isHive: !!clusterDeployment,
+        isManaged: !!managedCluster || !!managedClusterInfo,
+        isCurator: !!clusterCurator,
+        hive: getHiveConfig(clusterDeployment, clusterClaim),
+        clusterSet:
+            managedCluster?.metadata?.labels?.[managedClusterSetLabel] ||
+            managedClusterInfo?.metadata?.labels?.[managedClusterSetLabel] ||
+            clusterDeployment?.metadata?.labels?.[managedClusterSetLabel],
+        owner: getOwner(clusterDeployment, clusterClaim),
+    }
+}
+
+export function getHierarchicalCluster(
+    managedClusterInfos: ManagedClusterInfo[] = [],
+    managedClusterInfo: ManagedClusterInfo | undefined,
+    clusterDeployments: ClusterDeployment[] = [],
+    clusterDeployment: ClusterDeployment | undefined,
+    certificateSigningRequests: CertificateSigningRequest[] | undefined,
+    managedClusters: ManagedCluster[] = [],
+    managedCluster: ManagedCluster | undefined,
+    managedClusterAddOns: ManagedClusterAddOn[],
+    clusterClaims: ClusterClaim[] = [],
+    clusterClaim: ClusterClaim | undefined,
+    clusterCurators: ClusterCurator[] = [],
+    clusterCurator: ClusterCurator | undefined,
+    agentClusterInstalls: CIM.AgentClusterInstallK8sResource[] = [],
     agentClusterInstall: CIM.AgentClusterInstallK8sResource | undefined
 ): Cluster {
     const { status, statusMessage } = getClusterStatus(
@@ -232,7 +326,68 @@ export function getCluster(
             managedClusterInfo?.metadata?.labels?.[managedClusterSetLabel] ||
             clusterDeployment?.metadata?.labels?.[managedClusterSetLabel],
         owner: getOwner(clusterDeployment, clusterClaim),
+        managedClusters: getManagedClusters(
+            clusterDeployment?.metadata.name ?? managedCluster?.metadata.name ?? managedClusterInfo?.metadata.name,
+            clusterDeployments,
+            managedClusterInfos,
+            certificateSigningRequests,
+            managedClusters,
+            managedClusterAddOns,
+            clusterClaims,
+            clusterCurators,
+            agentClusterInstalls
+        )
     }
+}
+
+export function getManagedClusters(
+    mcName: string | undefined,
+    clusterDeployments: ClusterDeployment[] = [],
+    managedClusterInfos: ManagedClusterInfo[] = [],
+    certificateSigningRequests: CertificateSigningRequest[] = [],
+    managedClusters: ManagedCluster[] = [],
+    managedClusterAddOns: ManagedClusterAddOn[] = [],
+    clusterClaims: ClusterClaim[] = [],
+    clusterCurators: ClusterCurator[] = [],
+    agentClusterInstalls: CIM.AgentClusterInstallK8sResource[] = []
+) {
+    const managedByClusters = managedClusters.filter((mc) => mcName === mc?.metadata?.annotations?.[HoHManagedByAnnotation]) ?? []
+    const uniqueClusterNames = Array.from(
+        new Set([
+            ...managedByClusters.map((mc) => mc.metadata.name),
+        ])
+    )
+    return uniqueClusterNames.map((cluster) => {
+        const clusterDeployment = clusterDeployments?.find((cd) => cd.metadata?.name === cluster)
+        const managedClusterInfo = managedClusterInfos?.find((mc) => mc.metadata?.name === cluster)
+        const managedCluster = managedClusters?.find((mc) => mc.metadata?.name === cluster)
+        const addons = managedClusterAddOns.filter((mca) => mca.metadata.namespace === cluster)
+        const clusterClaim = clusterClaims.find((clusterClaim) => clusterClaim.spec?.namespace === cluster)
+        const clusterCurator = clusterCurators.find((cc) => cc.metadata.namespace === cluster)
+        const agentClusterInstall =
+            clusterDeployment?.spec?.clusterInstallRef &&
+            agentClusterInstalls.find(
+                (aci) =>
+                    aci.metadata.namespace === clusterDeployment.metadata.namespace &&
+                    aci.metadata.name === clusterDeployment?.spec?.clusterInstallRef?.name
+            )
+        return getHierarchicalCluster(
+            managedClusterInfos,
+            managedClusterInfo,
+            clusterDeployments,
+            clusterDeployment,
+            certificateSigningRequests,
+            managedClusters,
+            managedCluster,
+            addons,
+            clusterClaims,
+            clusterClaim,
+            clusterCurators,
+            clusterCurator,
+            agentClusterInstalls,
+            agentClusterInstall,
+        )
+    })
 }
 
 const checkForCondition = (condition: string, conditions: V1CustomResourceDefinitionCondition[], status?: string) =>
@@ -300,6 +455,31 @@ export function getOwner(clusterDeployment?: ClusterDeployment, clusterClaim?: C
     return {
         createdBy: decode(cdUserIdentity),
         claimedBy: decode(ccUserIdentity),
+    }
+}
+
+export function getACMDistribution(
+    manifestworks: ManifestWork[] = [],
+) : ACMDistribution {
+    let version, channel = ""
+    for (const manifestwork of manifestworks) {
+        for (const manifest of manifestwork?.status?.resourceStatus?.manifests) {
+            if (manifest.resourceMeta.kind == "MultiClusterHub" && 
+                manifest.resourceMeta.group === "operator.open-cluster-management.io") {
+                    if (manifest.statusFeedback.values !== undefined) {
+                        for (const value of manifest.statusFeedback.values) {
+                            if (value.name === "currentVersion") {
+                                version = value.fieldValue.string
+                                channel = `release-` + version.substring(0, version.lastIndexOf('.'))
+                            }
+                        }
+                    }
+            }
+        }
+    }
+    return {
+        version: version,
+        channel: channel
     }
 }
 

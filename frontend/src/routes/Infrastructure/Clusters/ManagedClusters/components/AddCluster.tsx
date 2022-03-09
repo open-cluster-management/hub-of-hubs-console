@@ -8,7 +8,7 @@ import { canUser } from '../../../../../lib/rbac-util'
 import { NavigationPath } from '../../../../../NavigationPath'
 import { ManagedClusterDefinition } from '../../../../../resources'
 
-export function AddCluster(props: { type: 'button' | 'dropdown'; buttonType?: 'primary' | 'link' }) {
+export function AddCluster(props: { fromHierarchy: boolean | false; type: 'button' | 'dropdown'; buttonType?: 'primary' | 'link' }) {
     const { t } = useTranslation('cluster')
     const history = useHistory()
 
@@ -31,7 +31,7 @@ export function AddCluster(props: { type: 'button' | 'dropdown'; buttonType?: 'p
                             isDisabled={!canCreateCluster}
                             tooltip={t('common:rbac.unauthorized')}
                             variant={props.buttonType ?? 'primary'}
-                            to={NavigationPath.createCluster}
+                            to={props.fromHierarchy ? NavigationPath.createHubCluster : NavigationPath.createCluster}
                         >
                             {t('managed.createCluster')}
                         </AcmButton>
@@ -42,7 +42,7 @@ export function AddCluster(props: { type: 'button' | 'dropdown'; buttonType?: 'p
                             isDisabled={!canCreateCluster}
                             tooltip={t('common:rbac.unauthorized')}
                             variant={props.buttonType ?? 'primary'}
-                            to={NavigationPath.importCluster}
+                            to={props.fromHierarchy ? NavigationPath.importHubCluster : NavigationPath.importCluster}
                         >
                             {t('managed.importCluster')}
                         </AcmButton>
@@ -54,10 +54,10 @@ export function AddCluster(props: { type: 'button' | 'dropdown'; buttonType?: 'p
         const onSelect = (id: string) => {
             switch (id) {
                 case 'create-cluster':
-                    history.push(NavigationPath.createCluster)
+                    history.push(props.fromHierarchy ? NavigationPath.createHubCluster : NavigationPath.createCluster)
                     break
                 case 'import-cluster':
-                    history.push(NavigationPath.importCluster)
+                    history.push(props.fromHierarchy ? NavigationPath.importHubCluster : NavigationPath.importCluster)
                     break
             }
         }

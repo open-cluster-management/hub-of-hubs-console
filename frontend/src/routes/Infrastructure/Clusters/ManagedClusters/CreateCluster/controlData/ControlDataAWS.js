@@ -14,6 +14,7 @@ import {
     isHidden_lt_OCP48,
     isHidden_SNO,
     onChangeSNO,
+    onChangeACM,
 } from './ControlDataHelpers'
 import { DevPreviewLabel } from '../../../../../../components/TechPreviewAlert'
 
@@ -626,6 +627,16 @@ const controlDataAWS = [
             notification: 'creation.ocp.cluster.must.select.ocp.image',
             required: true,
         },
+    },
+    {
+        name: 'cluster.create.acm.hub',
+        tooltip: 'tooltip.cluster.create.acm.hub',
+        id: 'installACM',
+        type: 'checkbox',
+        active: true,
+        available: [false, true],
+        onSelect: onChangeACM,
+        hidden: true,
     },
     //Always Hidden
     {

@@ -1,5 +1,6 @@
 /* Copyright Contributors to the Open Cluster Management project */
 
+import { makeStyles } from '@material-ui/styles'
 import {
     AcmAlertContext,
     AcmEmptyState,
@@ -35,18 +36,19 @@ import {
 } from '../../../../resources'
 import { usePageContext } from '../Clusters'
 import { DiscoveryBanner } from '../DiscoveredClusters/DiscoveryComponents/Banner'
-import { AddCluster } from './components/AddCluster'
-import { BatchChannelSelectModal } from './components/BatchChannelSelectModal'
-import { BatchUpgradeModal } from './components/BatchUpgradeModal'
-import { DistributionField } from './components/DistributionField'
-import { StatusField } from './components/StatusField'
-import { useAllClusters } from './components/useAllClusters'
+import { AddCluster } from '../ManagedClusters/components/AddCluster'
+import { BatchChannelSelectModal } from '../ManagedClusters/components/BatchChannelSelectModal'
+import { BatchUpgradeModal } from '../ManagedClusters/components/BatchUpgradeModal'
+import { ClusterActionDropdown } from '../ManagedClusters/components/ClusterActionDropdown'
+import { DistributionField } from '../ManagedClusters/components/DistributionField'
+import { StatusField } from '../ManagedClusters/components/StatusField'
+import { useAllClusters } from '../ManagedClusters/components/useAllClusters'
 
 export default function ClustersPage() {
     const { t } = useTranslation(['cluster', 'discovery'])
     const alertContext = useContext(AcmAlertContext)
     const isDiscoveryBannerDismissed = 'true'
-    let clusters = useAllClusters()
+    let clusters = useAllClusters(true)
     clusters = clusters.filter((cluster) => {
         // don't show clusters in cluster pools in table
         if (cluster) {
@@ -86,16 +88,34 @@ export default function ClustersPage() {
                     <StackItem>
                         <ClustersTable
                             clusters={clusters}
+                            tableActions={[
+                                {
+                                    id: 'createCluster',
+                                    title: t('managed.createCluster'),
+                                    click: () => history.push(NavigationPath.createHubCluster),
+                                    isDisabled: !canCreateCluster,
+                                    tooltip: t('common:rbac.unauthorized'),
+                                },
+                                {
+                                    id: 'importCluster',
+                                    title: t('managed.importCluster'),
+                                    click: () => history.push(NavigationPath.importHubCluster),
+                                    isDisabled: !canCreateCluster,
+                                    tooltip: t('common:rbac.unauthorized'),
+                                    variant: ButtonVariant.secondary,
+                                },
+                            ]}
                             emptyState={
                                 <AcmEmptyState
                                     key="mcEmptyState"
                                     title={t('managed.emptyStateHeader')}
                                     message={
                                         <Trans
-                                            i18nKey={'cluster:managed.emptyStateMsg'}
+                                            i18nKey={'cluster:hub.emptyStateMsg'}
                                             components={{ bold: <strong /> }}
                                         />
                                     }
+                                    action={<AddCluster type="button" fromHierarchy={true} />}
                                 />
                             }
                         />
@@ -200,6 +220,35 @@ export function ClustersTable(props: {
             <AcmTable<Cluster>
                 plural="clusters"
                 items={props.clusters}
+                addSubRows={(cluster: Cluster) => {
+                    if (cluster.managedClusters === undefined || (cluster.managedClusters !== undefined && cluster.managedClusters.length === 0)) {
+                        
+                        return undefined
+                    } else {
+                        return [
+                            {
+                                cells: [
+                                    {
+                                        title: (
+                                            <>
+                                                {true && (
+                                                    <div style={{ marginTop: '16px', marginBottom: '16px' }}>
+                                                        <TextContent>
+                                                            <Text component={TextVariants.h3}>
+                                                                {t('cluster.clusters')}
+                                                            </Text>
+                                                        </TextContent>
+                                                        <ManagedClustersTable clusters={cluster.managedClusters} />
+                                                    </div>
+                                                )}
+                                            </>
+                                        ),
+                                    },
+                                ],
+                            },
+                        ]
+                    }
+                }}
                 columns={[
                     {
                         header: t('table.name'),
@@ -209,7 +258,7 @@ export function ClustersTable(props: {
                         cell: (cluster) => (
                             <>
                                 <span style={{ whiteSpace: 'nowrap' }}>
-                                    <Link to={NavigationPath.clusterDetails.replace(':id', cluster.name as string)}>
+                                    <Link to={NavigationPath.hubClusterDetails.replace(':id', cluster.name as string)}>
                                         {cluster.displayName}
                                     </Link>
                                 </span>
@@ -229,6 +278,26 @@ export function ClustersTable(props: {
                             <span style={{ whiteSpace: 'nowrap' }}>
                                 <StatusField cluster={cluster} />
                             </span>
+                        ),
+                    },
+                    {
+                        header: t('table.provider'),
+                        sort: 'provider',
+                        search: 'provider',
+                        cell: (cluster) =>
+                            cluster?.provider ? <AcmInlineProvider provider={cluster?.provider} /> : '-',
+                    },
+                    {
+                        header: t('table.distribution'),
+                        sort: 'distribution.displayVersion',
+                        search: 'distribution.displayVersion',
+                        cell: (cluster) => (
+                            <DistributionField
+                                cluster={cluster}
+                                clusterCurator={clusterCurators.find(
+                                    (curator) => curator.metadata.name === cluster.name
+                                )}
+                            />
                         ),
                     },
                     {
@@ -285,6 +354,13 @@ export function ClustersTable(props: {
                                 '-'
                             )
                         },
+                    },
+                    {
+                        header: '',
+                        cell: (cluster: Cluster) => {
+                            return <ClusterActionDropdown cluster={cluster} isKebab={true} />
+                        },
+                        cellTransforms: [fitContent],
                     },
                 ]}
                 keyFn={mckeyFn}
@@ -424,5 +500,92 @@ export function ClustersTable(props: {
                 emptyState={props.emptyState}
             />
         </Fragment>
+    )
+}
+
+const useStyles = makeStyles({
+    table: {
+        '& .pf-c-table tr > *:first-child': {
+            paddingLeft: '0 !important',
+        },
+    },
+})
+
+function ManagedClustersTable(props: { clusters: Cluster[] }) {
+    const { t } = useTranslation(['cluster'])
+    const classes = useStyles()
+    const [clusterCurators] = useRecoilState(clusterCuratorsState)
+    return (
+        <div className={classes.table}>
+            <AcmTable<Cluster>
+                noBorders
+                keyFn={(cluster: Cluster) => cluster.name!}
+                key="managedClustersTable"
+                autoHidePagination
+                showToolbar={false}
+                plural="clusters"
+                items={props.clusters}
+                columns={[
+                    {
+                        header: t('table.name'),
+                        sort: 'displayName',
+                        cell: (cluster) => (
+                            <>
+                                <span style={{ whiteSpace: 'nowrap' }}>{cluster.displayName}</span>
+                                {cluster.hive.clusterClaimName && (
+                                    <TextContent>
+                                        <Text component={TextVariants.small}>{cluster.hive.clusterClaimName}</Text>
+                                    </TextContent>
+                                )}
+                            </>
+                        ),
+                    },
+                    {
+                        header: t('table.status'),
+                        sort: 'status',
+                        search: 'status',
+                        cell: (cluster: Cluster) => (
+                            <span style={{ whiteSpace: 'nowrap' }}>
+                                <StatusField cluster={cluster} />
+                            </span>
+                        ),
+                    },
+                    {
+                        header: t('table.provider'),
+                        sort: 'provider',
+                        search: 'provider',
+                        cell: (cluster) =>
+                            cluster?.provider ? <AcmInlineProvider provider={cluster?.provider} /> : '-',
+                    },
+                    {
+                        header: t('table.distribution'),
+                        sort: 'distribution.displayVersion',
+                        search: 'distribution.displayVersion',
+                        cell: (cluster) => (
+                            <DistributionField
+                                cluster={cluster}
+                                clusterCurator={clusterCurators.find(
+                                    (curator) => curator.metadata.name === cluster.name
+                                )}
+                            />
+                        ),
+                    },
+                    {
+                        header: t('table.nodes'),
+                        cell: (cluster) => {
+                            return cluster.nodes!.nodeList!.length > 0 ? (
+                                <AcmInlineStatusGroup
+                                    healthy={cluster.nodes!.ready}
+                                    danger={cluster.nodes!.unhealthy}
+                                    unknown={cluster.nodes!.unknown}
+                                />
+                            ) : (
+                                '-'
+                            )
+                        },
+                    },
+                ]}
+            />
+        </div>
     )
 }
