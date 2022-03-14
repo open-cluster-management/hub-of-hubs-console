@@ -29,7 +29,7 @@ import { Link, Redirect, Route, RouteComponentProps, Switch, useHistory, useLoca
 import { useRecoilState, useRecoilValue, waitForAll } from 'recoil'
 import { CIM } from 'openshift-assisted-ui-lib'
 import {
-    acmRouteState,
+    hubOfHubsRouteState,
     certificateSigningRequestsState,
     clusterClaimsState,
     clusterCuratorsState,
@@ -54,6 +54,7 @@ import { MachinePoolsPageContent } from './ClusterMachinePools/ClusterMachinePoo
 import { NodePoolsPageContent } from './ClusterNodes/ClusterNodes'
 import { ClusterOverviewPageContent } from './ClusterOverview/ClusterOverview'
 import { ClustersSettingsPageContent } from './ClusterSettings/ClusterSettings'
+import { HubOfHubsRoute } from 'hub-of-hubs-ui-components'
 
 export const ClusterContext = createContext<{
     readonly cluster: Cluster | undefined
@@ -76,8 +77,6 @@ export default function ClusterDetailsPage({ match }: RouteComponentProps<{ id: 
     const location = useLocation()
     const history = useHistory()
     const { t } = useTranslation(['cluster'])
-    const [, setRoute] = useRecoilState(acmRouteState)
-    useEffect(() => setRoute(AcmRoute.Clusters), [setRoute])
 
     const [
         managedClusters,
@@ -135,6 +134,14 @@ export default function ClusterDetailsPage({ match }: RouteComponentProps<{ id: 
     const mws = manifestWorks?.filter((mw) => mw.metadata?.namespace === match.params.id)
 
     const fromHierarchy = location.pathname.startsWith(NavigationPath.hubClusterDetails.replace(':id', match.params.id as string))
+    const [, setRoute] = useRecoilState(hubOfHubsRouteState)
+    useEffect(() => {
+        if (fromHierarchy) {
+            setRoute(HubOfHubsRoute.HubClusters), [setRoute]
+        } else {
+            setRoute(HubOfHubsRoute.Clusters), [setRoute]
+        }
+    })
 
     const clusterExists = !!managedCluster || !!clusterDeployment || !!managedClusterInfo
 

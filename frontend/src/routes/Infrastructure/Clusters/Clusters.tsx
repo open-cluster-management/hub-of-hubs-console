@@ -3,7 +3,6 @@
 import {
     AcmPage,
     AcmPageHeader,
-    AcmRoute,
     AcmSecondaryNav,
     AcmSecondaryNavItem,
 } from '@open-cluster-management/ui-components'
@@ -11,9 +10,10 @@ import { createContext, ElementType, Fragment, lazy, ReactNode, Suspense, useCon
 import { useTranslation } from 'react-i18next'
 import { Link, Redirect, Route, Switch, useLocation } from 'react-router-dom'
 import { useRecoilState } from 'recoil'
-import { acmRouteState } from '../../../atoms'
+import { hubOfHubsRouteState } from '../../../atoms'
 import { DOC_LINKS } from '../../../lib/doc-util'
 import { NavigationPath } from '../../../NavigationPath'
+import { HubOfHubsRoute } from 'hub-of-hubs-ui-components'
 
 const ClustersPage = lazy(() => import('./ManagedClusters/ManagedClusters'))
 const DiscoveredClustersPage = lazy(() => import('./DiscoveredClusters/DiscoveredClusters'))
@@ -58,11 +58,11 @@ export function ClusterManagement(props: {
     const location = useLocation()
     const { t } = useTranslation(['cluster', 'bma'])
 
-    const [, setRoute] = useRecoilState(acmRouteState)
+    const [, setRoute] = useRecoilState(hubOfHubsRouteState)
     if (!fromHierarchy) {
-        useEffect(() => setRoute(AcmRoute.Clusters), [setRoute])
+        useEffect(() => setRoute(HubOfHubsRoute.Clusters), [setRoute])
     } else {
-        useEffect(() => setRoute(AcmRoute.Clusters), [setRoute])
+        useEffect(() => setRoute(HubOfHubsRoute.HubClusters), [setRoute])
     }
     return (
         <AcmPage

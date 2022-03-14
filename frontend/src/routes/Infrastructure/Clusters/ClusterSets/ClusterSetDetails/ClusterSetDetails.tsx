@@ -14,7 +14,6 @@ import {
     AcmPage,
     AcmPageHeader,
     AcmPageProcess,
-    AcmRoute,
     AcmSecondaryNav,
     AcmSecondaryNavItem,
 } from '@open-cluster-management/ui-components'
@@ -24,7 +23,7 @@ import { Trans, useTranslation } from 'react-i18next'
 import { Link, Redirect, Route, RouteComponentProps, Switch, useHistory, useLocation } from 'react-router-dom'
 import { useRecoilState, useRecoilValue, waitForAll } from 'recoil'
 import {
-    acmRouteState,
+    hubOfHubsRouteState,
     clusterPoolsState,
     managedClusterAddonsState,
     managedClusterSetsState,
@@ -42,6 +41,7 @@ import { InstallSubmarinerFormPage } from './ClusterSetInstallSubmariner/Install
 import { ClusterSetManageResourcesPage } from './ClusterSetManageResources/ClusterSetManageResources'
 import { ClusterSetOverviewPageContent } from './ClusterSetOverview/ClusterSetOverview'
 import { ClusterSetSubmarinerPageContent } from './ClusterSetSubmariner/ClusterSetSubmariner'
+import { HubOfHubsRoute } from 'hub-of-hubs-ui-components'
 
 export const ClusterSetContext = createContext<{
     readonly clusterSet: ManagedClusterSet | undefined
@@ -61,8 +61,8 @@ export default function ClusterDetailsPage({ match }: RouteComponentProps<{ id: 
     const location = useLocation()
     const history = useHistory()
     const { t } = useTranslation(['cluster'])
-    const [, setRoute] = useRecoilState(acmRouteState)
-    useEffect(() => setRoute(AcmRoute.Clusters), [setRoute])
+    const [, setRoute] = useRecoilState(hubOfHubsRouteState)
+    useEffect(() => setRoute(HubOfHubsRoute.Clusters), [setRoute])
 
     const [managedClusterSets, managedClusterAddons] = useRecoilValue(
         waitForAll([managedClusterSetsState, managedClusterAddonsState])
