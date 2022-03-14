@@ -61,8 +61,10 @@ import { Fragment, ReactNode, useEffect, useState } from 'react'
 import { atom, SetterOrUpdater, useRecoilState } from 'recoil'
 import { CIM } from 'openshift-assisted-ui-lib'
 import { LoadingPage } from './components/LoadingPage'
+import { HubOfHubsRoute } from 'hub-of-hubs-ui-components'
 
 export const acmRouteState = atom<AcmRoute>({ key: 'acmRoute', default: '' as AcmRoute })
+export const hubOfHubsRouteState = atom<HubOfHubsRoute>({ key: 'hubOfHubsRoute', default: '' as HubOfHubsRoute })
 export const bareMetalAssetsState = atom<BareMetalAsset[]>({ key: 'bareMetalAssets', default: [] })
 export const certificateSigningRequestsState = atom<CertificateSigningRequest[]>({
     key: 'certificateSigningRequests',

@@ -8,7 +8,6 @@ import {
     AcmPage,
     AcmPageContent,
     AcmPageHeader,
-    AcmRoute,
     AcmTable,
     compareStrings,
     Provider,
@@ -21,19 +20,20 @@ import { Fragment, useEffect, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { Link, useHistory } from 'react-router-dom'
 import { useRecoilState } from 'recoil'
-import { acmRouteState, discoveryConfigState, secretsState } from '../../atoms'
+import { hubOfHubsRouteState, discoveryConfigState, secretsState } from '../../atoms'
 import { BulkActionModel, IBulkActionModelProps } from '../../components/BulkActionModel'
 import { RbacDropdown } from '../../components/Rbac'
 import { rbacDelete, rbacPatch } from '../../lib/rbac-util'
 import { NavigationPath } from '../../NavigationPath'
+import { HubOfHubsRoute } from 'hub-of-hubs-ui-components'
 
 export default function CredentialsPage() {
     const { t } = useTranslation(['credentials'])
     const [secrets] = useRecoilState(secretsState)
     const providerConnections = secrets.map(unpackProviderConnection)
     const [discoveryConfigs] = useRecoilState(discoveryConfigState)
-    const [, setRoute] = useRecoilState(acmRouteState)
-    useEffect(() => setRoute(AcmRoute.Credentials), [setRoute])
+    const [, setRoute] = useRecoilState(hubOfHubsRouteState)
+    useEffect(() => setRoute(HubOfHubsRoute.Credentials), [setRoute])
     return (
         <AcmPage header={<AcmPageHeader title={t('credentialsPage.title')} />}>
             <AcmPageContent id="credentials">

@@ -10,7 +10,7 @@ import { HubOfHubsHeader } from 'hub-of-hubs-ui-components'
 import { Suspense, lazy } from 'react'
 import { BrowserRouter, Redirect, Route, Switch } from 'react-router-dom'
 import { useRecoilState } from 'recoil'
-import { acmRouteState, LoadData } from './atoms'
+import { hubOfHubsRouteState, LoadData } from './atoms'
 import './lib/i18n'
 import { NavigationPath } from './NavigationPath'
 import { LoadingPage } from './components/LoadingPage'
@@ -53,7 +53,7 @@ const EditAICluster = lazy(
 )
 
 export default function App() {
-    const [route] = useRecoilState(acmRouteState)
+    const [route] = useRecoilState(hubOfHubsRouteState)
     return (
         <BrowserRouter>
             <HubOfHubsHeader route={route}>
