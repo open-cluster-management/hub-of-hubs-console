@@ -19,6 +19,7 @@ import { AgentClusterInstallKind } from '../agent-cluster-install'
 const { isDraft } = CIM
 
 export const HoHManagedByAnnotation = 'hub-of-hubs.open-cluster-management.io/managed-by'
+export const HoHManagedByHoHAnnotation = 'hub-of-hubs.open-cluster-management.io/managed-by-hoh'
 
 export enum ClusterStatus {
     'pending' = 'pending',
@@ -186,6 +187,8 @@ export function mapClusters(
                     aci.metadata.namespace === clusterDeployment.metadata.namespace &&
                     aci.metadata.name === clusterDeployment?.spec?.clusterInstallRef?.name
             )
+        const managedClusterName = clusterDeployment?.metadata.name ?? managedCluster?.metadata.name ?? managedClusterInfo?.metadata.name
+        if (managedClusterName === 'local-cluster') return
         if (!!fromHierarchical) {
             let managedClusterManagedBy = managedCluster?.metadata?.annotations?.[HoHManagedByAnnotation]
             if (managedClusterManagedBy === undefined) {
@@ -207,7 +210,7 @@ export function mapClusters(
                 )
             }
         } else {
-            let managedClusterManagedBy = managedCluster?.metadata?.annotations?.[HoHManagedByAnnotation]
+            let managedClusterManagedBy = managedCluster?.metadata?.annotations?.[HoHManagedByHoHAnnotation]
             if (managedClusterManagedBy !== undefined && managedClusterManagedBy === 'true') {
                 return
             }
@@ -463,6 +466,10 @@ export function getACMDistribution(
 ) : ACMDistribution {
     let version, channel = ""
     for (const manifestwork of manifestworks) {
+        if (!manifestwork?.status || !manifestwork?.status?.resourceStatus ||
+            !manifestwork?.status?.resourceStatus?.manifests) {
+            break 
+        }
         for (const manifest of manifestwork?.status?.resourceStatus?.manifests) {
             if (manifest.resourceMeta.kind == "MultiClusterHub" && 
                 manifest.resourceMeta.group === "operator.open-cluster-management.io") {
