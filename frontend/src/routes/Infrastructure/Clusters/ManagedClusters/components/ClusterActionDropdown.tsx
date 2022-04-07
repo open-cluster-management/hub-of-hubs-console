@@ -357,6 +357,9 @@ export function ClusterActionDropdown(props: { cluster: Cluster; isKebab: boolea
         actions = actions.filter((a) => a.id !== 'ai-edit')
     }
 
+    // for Hub-of-Hubs leave only 'edit-labels' action
+    actions = actions.filter((a) => a.id === 'edit-labels')
+
     return (
         <>
             <EditLabels
