@@ -63,7 +63,7 @@ export default function ClustersPage() {
 
     useEffect(() => alertContext.clearAlerts, [])
 
-    usePageContext(clusters.length > 0, PageActions)
+    //usePageContext(clusters.length > 0, PageActions)
 
     const history = useHistory()
     const [canCreateCluster, setCanCreateCluster] = useState<boolean>(false)
