@@ -358,7 +358,7 @@ export function ClustersTable(props: {
                     {
                         header: '',
                         cell: (cluster: Cluster) => {
-                            return <ClusterActionDropdown cluster={cluster} isKebab={true} />
+                            return <ClusterActionDropdown cluster={cluster} isKebab={true} fromHierarchy={true} />
                         },
                         cellTransforms: [fitContent],
                     },

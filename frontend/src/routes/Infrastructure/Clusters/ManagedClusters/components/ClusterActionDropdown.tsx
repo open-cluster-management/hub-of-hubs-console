@@ -25,7 +25,7 @@ import { BatchUpgradeModal } from './BatchUpgradeModal'
 import { EditLabels } from './EditLabels'
 import { StatusField } from './StatusField'
 
-export function ClusterActionDropdown(props: { cluster: Cluster; isKebab: boolean }) {
+export function ClusterActionDropdown(props: { cluster: Cluster; isKebab: boolean; fromHierarchy: boolean }) {
     const { t } = useTranslation(['cluster'])
     const history = useHistory()
 
@@ -357,8 +357,10 @@ export function ClusterActionDropdown(props: { cluster: Cluster; isKebab: boolea
         actions = actions.filter((a) => a.id !== 'ai-edit')
     }
 
-    // for Hub-of-Hubs leave only 'edit-labels' action
-    actions = actions.filter((a) => a.id === 'edit-labels')
+    if (!props.fromHierarchy) {
+        // for Hub-of-Hubs leave only 'edit-labels' action
+        actions = actions.filter((a) => a.id === 'edit-labels')
+    }
 
     return (
         <>
