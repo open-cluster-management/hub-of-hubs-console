@@ -121,6 +121,7 @@ interface WatchEvent {
             name: string
             namespace: string
             resourceVersion: string
+            uid: string
         }
     }
 }
@@ -209,11 +210,19 @@ export function LoadData(props: { children?: ReactNode }) {
                     const newResources = [...resources]
                     for (const data of dataToProcess) {
                         if (data.object?.kind === kind) {
-                            const index = newResources.findIndex(
+                            let index = newResources.findIndex(
                                 (resource) =>
                                     resource.metadata?.name === data.object.metadata.name &&
                                     resource.metadata?.namespace === data.object.metadata.namespace
                             )
+                            if (data.object?.kind === 'ManagedCluster') {
+                                index = newResources.findIndex(
+                                    (resource) =>
+                                        resource.metadata?.name === data.object.metadata.name &&
+                                        resource.metadata?.namespace === data.object.metadata.namespace &&
+                                        resource.metadata?.uid === data.object.metadata.uid
+                                )
+                            }    
                             switch (data.type) {
                                 case 'ADDED':
                                 case 'MODIFIED':
@@ -238,11 +247,19 @@ export function LoadData(props: { children?: ReactNode }) {
             if (!setter) return
             setter((resources) => {
                 const newResources = [...resources]
-                const index = resources.findIndex(
+                let index = resources.findIndex(
                     (resource) =>
                         resource.metadata?.name === data.object.metadata.name &&
                         resource.metadata?.namespace === data.object.metadata.namespace
                 )
+                if (data.object?.kind === 'ManagedCluster') {
+                    index = newResources.findIndex(
+                        (resource) =>
+                            resource.metadata?.name === data.object.metadata.name &&
+                            resource.metadata?.namespace === data.object.metadata.namespace &&
+                            resource.metadata?.uid === data.object.metadata.uid
+                    )
+                }
                 switch (data.type) {
                     case 'ADDED':
                     case 'MODIFIED':

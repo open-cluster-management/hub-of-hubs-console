@@ -166,17 +166,25 @@ export function mapClusters(
     fromHierarchical: boolean = false
 ) {
     const mcs = managedClusters.filter((mc) => mc.metadata?.name) ?? []
-    const uniqueClusterNames = Array.from(
+    let uniqueClusterNames = Array.from(
         new Set([
             ...clusterDeployments.map((cd) => cd.metadata.name),
             ...managedClusterInfos.map((mc) => mc.metadata.name),
             ...mcs.map((mc) => mc.metadata.name),
         ])
     )
+    // if there are the same name clusters, using uid
+    for (let i = 0; i < uniqueClusterNames.length; i = i + 1) {
+        let mclsWithSameName = managedClusters.filter((mc) => mc.metadata?.name === uniqueClusterNames[i])
+        if (mclsWithSameName.length > 1) {
+            uniqueClusterNames.splice(i, 1)
+            uniqueClusterNames.push(...mclsWithSameName.map((mc) => mc.metadata.uid))
+        }
+    }
     return uniqueClusterNames.map((cluster) => {
         const clusterDeployment = clusterDeployments?.find((cd) => cd.metadata?.name === cluster)
         const managedClusterInfo = managedClusterInfos?.find((mc) => mc.metadata?.name === cluster)
-        const managedCluster = managedClusters?.find((mc) => mc.metadata?.name === cluster)
+        const managedCluster = managedClusters?.find((mc) => mc.metadata?.uid === cluster || mc.metadata?.name === cluster)
         const addons = managedClusterAddOns.filter((mca) => mca.metadata.namespace === cluster)
         const clusterClaim = clusterClaims.find((clusterClaim) => clusterClaim.spec?.namespace === cluster)
         const clusterCurator = clusterCurators.find((cc) => cc.metadata.namespace === cluster)
@@ -357,13 +365,13 @@ export function getManagedClusters(
     const managedByClusters = managedClusters.filter((mc) => mcName === mc?.metadata?.annotations?.[HoHManagedByAnnotation]) ?? []
     const uniqueClusterNames = Array.from(
         new Set([
-            ...managedByClusters.map((mc) => mc.metadata.name),
+            ...managedByClusters.map((mc) => mc.metadata.uid),
         ])
     )
     return uniqueClusterNames.map((cluster) => {
         const clusterDeployment = clusterDeployments?.find((cd) => cd.metadata?.name === cluster)
         const managedClusterInfo = managedClusterInfos?.find((mc) => mc.metadata?.name === cluster)
-        const managedCluster = managedClusters?.find((mc) => mc.metadata?.name === cluster)
+        const managedCluster = managedClusters?.find((mc) => mc.metadata?.uid === cluster)
         const addons = managedClusterAddOns.filter((mca) => mca.metadata.namespace === cluster)
         const clusterClaim = clusterClaims.find((clusterClaim) => clusterClaim.spec?.namespace === cluster)
         const clusterCurator = clusterCurators.find((cc) => cc.metadata.namespace === cluster)
