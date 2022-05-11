@@ -2,6 +2,7 @@
 
 import { V1ObjectMeta } from '@kubernetes/client-node/dist/gen/model/v1ObjectMeta'
 import { join } from 'path'
+import { HoHManagedByAnnotation } from './utils'
 
 // https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.19
 
@@ -35,6 +36,10 @@ export function getResourceGroup(resourceDefinition: IResourceDefinition) {
 
 export function getResourceName(resource: Partial<IResource>) {
     return resource.metadata?.name
+}
+
+export function getHubClusterName(resource: Partial<IResource>) {
+    return resource.metadata?.annotations?.[HoHManagedByAnnotation] ?? ''
 }
 
 export function setResourceName(resource: Partial<IResource>, name: string) {

@@ -64,6 +64,7 @@ export const clusterDangerStatuses = [
 export type Cluster = {
     name?: string
     displayName?: string
+    id?: string
     namespace?: string
     status: ClusterStatus
     statusMessage?: string
@@ -91,6 +92,7 @@ export type Cluster = {
         createdBy?: string
         claimedBy?: string
     }
+    hubClusterName?: string
     managedClusters?: Cluster[]
 }
 
@@ -258,6 +260,8 @@ export function getCluster(
     )
     return {
         name: clusterDeployment?.metadata.name ?? managedCluster?.metadata.name ?? managedClusterInfo?.metadata.name,
+        id: managedCluster?.status?.clusterClaims?.find((claim) => claim.name === 'id.openshift.io')?.value ?? 
+            managedCluster?.status?.clusterClaims?.find((claim) => claim.name === 'id.k8s.io')?.value ?? managedCluster?.metadata.name,
         displayName:
             // clusterDeployment?.spec?.clusterPoolRef?.claimName ??
             clusterDeployment?.metadata.name ?? managedCluster?.metadata.name ?? managedClusterInfo?.metadata.name,
@@ -283,6 +287,7 @@ export function getCluster(
             managedClusterInfo?.metadata?.labels?.[managedClusterSetLabel] ||
             clusterDeployment?.metadata?.labels?.[managedClusterSetLabel],
         owner: getOwner(clusterDeployment, clusterClaim),
+        hubClusterName: managedCluster?.metadata?.annotations?.[HoHManagedByAnnotation],
     }
 }
 

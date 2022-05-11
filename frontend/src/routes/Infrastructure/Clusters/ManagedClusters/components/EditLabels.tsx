@@ -59,6 +59,7 @@ export function EditLabels(props: { resource?: IResource; displayName?: string; 
                                         metadata: {
                                             name: props.resource!.metadata!.name,
                                             labels: props.resource!.metadata!.labels,
+                                            annotations: props.resource!.metadata!.annotations
                                         },
                                     }
                                     let patch: { op: string; path: string; value?: unknown }[] = []

@@ -157,6 +157,7 @@
     "actions": "Actions",
 
     "table.name": "Name",
+    "table.id": "ID",
     "table.cluster": "Cluster",
     "table.name.helperText": "The common Kubernetes resource name shared by multiple resources generated from cluster creation or import; including the <bold>Namespace</bold>, <bold>ManagedCluster</bold>, or <bold>ClusterDeployment</bold>. The cluster claim name will be displayed under the cluster name if it was claimed from a cluster pool.",
     "table.name.helperText.noBold": "The common Kubernetes resource name shared by multiple resources generated from cluster creation or import; including the Namespace, ManagedCluster, or ClusterDeployment. The cluster claim name will be displayed under the cluster name if it was claimed from a cluster pool.",

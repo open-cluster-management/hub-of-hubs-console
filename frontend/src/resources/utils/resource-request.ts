@@ -1,6 +1,6 @@
 /* Copyright Contributors to the Open Cluster Management project */
 
-import { getResourceApiPath, getResourcePlural, getResourceName, getResourceNameApiPath, IResource, ResourceList } from '../resource'
+import { getResourceApiPath, getResourcePlural, getResourceName, getResourceNameApiPath, IResource, ResourceList, getHubClusterName } from '../resource'
 import { Status, StatusKind } from '../status'
 import { AnsibleTowerJobTemplateList } from '../ansible-job'
 
@@ -80,7 +80,10 @@ export function patchNonk8sResource<Resource extends IResource, ResultType = Res
     resource: Resource,
     data: unknown
 ): IRequestResult<ResultType> {
-    const url = backendUrl + nonk8sBackendPath + '/' + getResourcePlural(resource) + '/' + getResourceName(resource)
+    var url = backendUrl + nonk8sBackendPath + '/' + getResourcePlural(resource) + '/' + getResourceName(resource)
+    if (getHubClusterName(resource)) {
+        url += '?hubCluster='+getHubClusterName(resource)
+    }
     const headers: Record<string, string> = {}
     if (Array.isArray(data)) {
         headers['Content-Type'] = 'application/json-patch+json'

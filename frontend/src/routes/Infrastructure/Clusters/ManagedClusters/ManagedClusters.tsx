@@ -223,6 +223,13 @@ export function ClustersTable(props: {
                         ),
                     },
                     {
+                        header: t('table.id'),
+                        sort: 'ID',
+                        cell: (cluster) => (
+                            <span style={{ whiteSpace: 'nowrap' }}>{cluster.id}</span>
+                        ),
+                    },
+                    {
                         header: t('table.status'),
                         sort: 'status',
                         search: 'status',

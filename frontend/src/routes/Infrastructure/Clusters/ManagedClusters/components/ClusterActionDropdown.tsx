@@ -367,7 +367,7 @@ export function ClusterActionDropdown(props: { cluster: Cluster; isKebab: boolea
             <EditLabels
                 resource={
                     showEditLabels
-                        ? { ...ManagedClusterDefinition, metadata: { name: cluster.name, labels: cluster.labels } }
+                        ? { ...ManagedClusterDefinition, metadata: { name: cluster.name, labels: cluster.labels, annotations: {'hub-of-hubs.open-cluster-management.io/managed-by': cluster.hubClusterName} } }
                         : undefined
                 }
                 displayName={cluster.displayName}
