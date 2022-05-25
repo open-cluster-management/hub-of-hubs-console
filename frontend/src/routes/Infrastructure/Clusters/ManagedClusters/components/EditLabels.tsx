@@ -1,6 +1,6 @@
 /* Copyright Contributors to the Open Cluster Management project */
 
-import { IResource, patchNonk8sResource } from '../../../../../resources'
+import { IResource, patchResource, patchNonk8sResource } from '../../../../../resources'
 import {
     AcmAlertContext,
     AcmAlertGroup,
@@ -53,66 +53,124 @@ export function EditLabels(props: { resource?: IResource; displayName?: string; 
                                 variant="primary"
                                 onClick={() => {
                                     alertContext.clearAlerts()
-                                    const resource: IResource = {
-                                        apiVersion: props.resource!.apiVersion,
-                                        kind: props.resource!.kind,
-                                        metadata: {
-                                            name: props.resource!.metadata!.name,
-                                            labels: props.resource!.metadata!.labels,
-                                            annotations: props.resource!.metadata!.annotations
-                                        },
-                                    }
-                                    let patch: { op: string; path: string; value?: unknown }[] = []
+                                    let fromHierarchy = window?.localStorage?.getItem('isInfrastructureOpen') === 'true' ? true : false
 
-                                    let deletePatchMap: Map<string, { op: string; path: string; value?: string }> =
-                                        new Map()
-
-                                    /* istanbul ignore else */
-                                    if (resource!.metadata!.labels) {
-                                        Object.keys(resource!.metadata!.labels).forEach((key) => {
+                                    if (!!fromHierarchy) {
+                                        const resource: IResource = {
+                                            apiVersion: props.resource!.apiVersion,
+                                            kind: props.resource!.kind,
+                                            metadata: {
+                                                name: props.resource!.metadata!.name,
+                                                labels: props.resource!.metadata!.labels,
+                                            },
+                                        }
+                                        let patch: { op: string; path: string; value?: unknown }[] = []
+    
+                                        /* istanbul ignore else */
+                                        if (resource!.metadata!.labels) {
+                                            patch = [
+                                                ...patch,
+                                                ...Object.keys(resource!.metadata!.labels).map((key) => {
+                                                    key = key.replace(/\//g, '~1')
+                                                    return {
+                                                        op: 'remove',
+                                                        path: `/metadata/labels/${key}`,
+                                                    }
+                                                }),
+                                            ]
+                                        }
+                                        patch = [
+                                            ...patch,
+                                            ...Object.keys(labels).map((key) => {
+                                                const keyPath = key.replace(/\//g, '~1')
+                                                return {
+                                                    op: 'add',
+                                                    path: `/metadata/labels/${keyPath}`,
+                                                    value: labels[key],
+                                                }
+                                            }),
+                                        ]
+    
+                                        if (resource!.metadata?.labels === undefined) {
+                                            patch.unshift({
+                                                op: 'add',
+                                                path: '/metadata/labels',
+                                                value: {},
+                                            })
+                                        }
+    
+                                        return patchResource(resource!, patch)
+                                            .promise.then(() => {
+                                                props.close()
+                                            })
+                                            .catch((err) => {
+                                                const errorInfo = getErrorInfo(err)
+                                                alertContext.addAlert({
+                                                    type: 'danger',
+                                                    title: errorInfo.title,
+                                                    message: errorInfo.message,
+                                                })
+                                            })
+                                    } else {
+                                        const resource: IResource = {
+                                            apiVersion: props.resource!.apiVersion,
+                                            kind: props.resource!.kind,
+                                            metadata: {
+                                                name: props.resource!.metadata!.name,
+                                                labels: props.resource!.metadata!.labels,
+                                                annotations: props.resource!.metadata!.annotations
+                                            },
+                                        }
+                                        let patch: { op: string; path: string; value?: unknown }[] = []
+    
+                                        let deletePatchMap: Map<string, { op: string; path: string; value?: string }> =
+                                            new Map()
+    
+                                        /* istanbul ignore else */
+                                        if (resource!.metadata!.labels) {
+                                            Object.keys(resource!.metadata!.labels).forEach((key) => {
+                                                const keyPath = key.replace(/\//g, '~1')
+                                                deletePatchMap.set(keyPath, {
+                                                    op: 'remove',
+                                                    path: `/metadata/labels/${keyPath}`,
+                                                    value: resource!.metadata!.labels![key],
+                                                })
+                                            })
+                                        }
+    
+                                        let addPatchMap: Map<string, { op: string; path: string; value?: string }> =
+                                            new Map()
+    
+                                        Object.keys(labels).forEach((key) => {
                                             const keyPath = key.replace(/\//g, '~1')
-                                            deletePatchMap.set(keyPath, {
-                                                op: 'remove',
+                                            /* delete from deletePatchMap if key & value match */
+                                            if (deletePatchMap.has(keyPath)) {
+                                                if (deletePatchMap.get(keyPath)!.value === labels[key]) {
+                                                    deletePatchMap.delete(keyPath)
+                                                    return
+                                                }
+                                            }
+                                            // add to addPatchMap only if was not consumed in unsetting a delete
+                                            addPatchMap.set(keyPath, {
+                                                op: 'add',
                                                 path: `/metadata/labels/${keyPath}`,
-                                                value: resource!.metadata!.labels![key],
+                                                value: labels[key],
                                             })
                                         })
-                                    }
-
-                                    let addPatchMap: Map<string, { op: string; path: string; value?: string }> =
-                                        new Map()
-
-                                    Object.keys(labels).forEach((key) => {
-                                        const keyPath = key.replace(/\//g, '~1')
-                                        /* delete from deletePatchMap if key & value match */
-                                        if (deletePatchMap.has(keyPath)) {
-                                            if (deletePatchMap.get(keyPath)!.value === labels[key]) {
-                                                deletePatchMap.delete(keyPath)
-                                                return
-                                            }
+    
+                                        /* update patch to hold surviving (new) deletes + adds */
+                                        deletePatchMap.forEach((value, _) =>
+                                            patch.push({ op: value.op, path: value.path, }))
+                                        addPatchMap.forEach((value, _) => patch.push(value))
+    
+                                        if (resource!.metadata?.labels === undefined) {
+                                            patch.unshift({
+                                                op: 'add',
+                                                path: '/metadata/labels',
+                                                value: {},
+                                            })
                                         }
-                                        // add to addPatchMap only if was not consumed in unsetting a delete
-                                        addPatchMap.set(keyPath, {
-                                            op: 'add',
-                                            path: `/metadata/labels/${keyPath}`,
-                                            value: labels[key],
-                                        })
-                                    })
-
-                                    /* update patch to hold surviving (new) deletes + adds */
-                                    deletePatchMap.forEach((value, _) =>
-                                        patch.push({ op: value.op, path: value.path, }))
-                                    addPatchMap.forEach((value, _) => patch.push(value))
-
-                                    if (resource!.metadata?.labels === undefined) {
-                                        patch.unshift({
-                                            op: 'add',
-                                            path: '/metadata/labels',
-                                            value: {},
-                                        })
-                                    }
-
-                                    return patchNonk8sResource(resource!, patch)
+                                        return patchNonk8sResource(resource!, patch)
                                         .promise.then(() => {
                                             props.close()
                                         })
@@ -124,6 +182,7 @@ export function EditLabels(props: { resource?: IResource; displayName?: string; 
                                                 message: errorInfo.message,
                                             })
                                         })
+                                    }
                                 }}
                                 label={t('common:save')}
                                 processingLabel={t('common:saving')}
