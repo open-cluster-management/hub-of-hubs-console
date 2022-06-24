@@ -46,15 +46,12 @@ export const usePageContext = (showActions: boolean, Component: ElementType) => 
 
 
 export default function ClusterManagementPage() {
-    const location = useLocation()
-    return <ClusterManagement fromHierarchy={location.pathname.startsWith(NavigationPath.hierarchyClusters)} />
+    return <ClusterManagement />
 }
 
-export function ClusterManagement(props: {
-    fromHierarchy: boolean
-}) {
+export function ClusterManagement() {
     const [actions, setActions] = useState<undefined | ReactNode>(undefined)
-    const { fromHierarchy }= props
+    const fromHierarchy = window?.localStorage?.getItem('isInfrastructureOpen') === 'true' ? true : false
     const location = useLocation()
     const { t } = useTranslation(['cluster', 'bma'])
 

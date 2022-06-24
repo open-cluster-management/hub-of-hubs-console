@@ -133,7 +133,7 @@ export default function ClusterDetailsPage({ match }: RouteComponentProps<{ id: 
 
     const mws = manifestWorks?.filter((mw) => mw.metadata?.namespace === match.params.id)
 
-    const fromHierarchy = location.pathname.startsWith(NavigationPath.hubClusterDetails.replace(':id', match.params.id as string))
+    const fromHierarchy = window?.localStorage?.getItem('isInfrastructureOpen') === 'true' ? true : false
     const [, setRoute] = useRecoilState(hubOfHubsRouteState)
     useEffect(() => {
         if (fromHierarchy) {

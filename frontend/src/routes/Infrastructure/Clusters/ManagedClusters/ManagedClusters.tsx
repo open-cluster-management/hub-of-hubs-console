@@ -87,6 +87,15 @@ export default function ClustersPage() {
                     <StackItem>
                         <ClustersTable
                             clusters={clusters}
+                            tableActions={[
+                                {
+                                    id: 'createCluster',
+                                    title: t('managed.createCluster'),
+                                    click: () => history.push(NavigationPath.createHubCluster),
+                                    isDisabled: !canCreateCluster,
+                                    tooltip: t('common:rbac.unauthorized'),
+                                },
+                            ]}
                             emptyState={
                                 <AcmEmptyState
                                     key="mcEmptyState"

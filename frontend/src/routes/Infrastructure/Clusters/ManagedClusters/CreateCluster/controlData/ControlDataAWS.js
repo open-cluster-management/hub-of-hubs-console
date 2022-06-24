@@ -633,7 +633,7 @@ const controlDataAWS = [
         tooltip: 'tooltip.cluster.create.acm.hub',
         id: 'installACM',
         type: 'checkbox',
-        active: true,
+        active: window?.localStorage?.getItem('isInfrastructureOpen') === 'true' ? true : false,
         available: [false, true],
         onSelect: onChangeACM,
         hidden: true,

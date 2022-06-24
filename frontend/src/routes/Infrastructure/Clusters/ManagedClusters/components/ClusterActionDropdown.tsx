@@ -18,6 +18,7 @@ import { useHistory } from 'react-router'
 import { BulkActionModel, errorIsNot, IBulkActionModelProps } from '../../../../../components/BulkActionModel'
 import { RbacDropdown } from '../../../../../components/Rbac'
 import { deleteCluster, detachCluster } from '../../../../../lib/delete-cluster'
+import { deleteClusterManifestWork } from '../../../../../lib/cluster-manifestwork'
 import { createImportResources } from '../../../../../lib/import-cluster'
 import { rbacCreate, rbacDelete, rbacPatch } from '../../../../../lib/rbac-util'
 import { BatchChannelSelectModal } from './BatchChannelSelectModal'
@@ -263,7 +264,7 @@ export function ClusterActionDropdown(props: { cluster: Cluster; isKebab: boolea
                     description: t('bulk.message.destroy'),
                     columns: modalColumns,
                     keyFn: (cluster) => cluster.name as string,
-                    actionFn: (cluster) => deleteCluster(cluster),
+                    actionFn: (cluster) => !props.fromHierarchy ? deleteClusterManifestWork(cluster) : deleteCluster(cluster),
                     close: () => {
                         setModalProps({ open: false })
                     },
@@ -359,7 +360,7 @@ export function ClusterActionDropdown(props: { cluster: Cluster; isKebab: boolea
 
     if (!props.fromHierarchy) {
         // for Hub-of-Hubs leave only 'edit-labels' action
-        actions = actions.filter((a) => a.id === 'edit-labels')
+        actions = actions.filter((a) => a.id === 'edit-labels' || a.id === 'destroy-cluster')
     }
 
     return (

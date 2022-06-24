@@ -146,21 +146,10 @@ spec:
 apiVersion: cluster.open-cluster-management.io/v1
 kind: ManagedCluster
 metadata:
-{{#if installACM}}  
   annotations:
-    mch: |-
-      {
-        "apiVersion": "operator.open-cluster-management.io/v1",
-        "kind": "MultiClusterHub",
-        "metadata": {
-          "name": "multiclusterhub",
-          "namespace":"open-cluster-management"
-        },
-        "spec": {
-         "disableHubSelfManagement": true
-        }
-      }
-      hub-of-hubs.open-cluster-management.io/managed-by-hoh: 'true'
+    open-cluster-management/created-via: 'hive'
+{{#if installACM}}  
+    hub-of-hubs.open-cluster-management.io/managed-by-hoh: 'true'
 {{/if}}
   labels:
 {{#switch infrastructure}}

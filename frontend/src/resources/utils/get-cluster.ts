@@ -278,7 +278,7 @@ export function getCluster(
         nodes: getNodes(managedClusterInfo),
         kubeApiServer: getKubeApiServer(clusterDeployment, managedClusterInfo),
         consoleURL: getConsoleUrl(clusterDeployment, managedClusterInfo, managedCluster),
-        isHive: !!clusterDeployment,
+        isHive: !!clusterDeployment || managedCluster?.metadata?.annotations?.['open-cluster-management/created-via'] == 'hive',
         isManaged: !!managedCluster || !!managedClusterInfo,
         isCurator: !!clusterCurator,
         hive: getHiveConfig(clusterDeployment, clusterClaim),

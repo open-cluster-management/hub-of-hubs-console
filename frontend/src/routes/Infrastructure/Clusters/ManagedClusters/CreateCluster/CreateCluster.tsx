@@ -32,6 +32,7 @@ import {
     patchResource,
 } from '../../../../../resources'
 import { createCluster } from '../../../../../lib/create-cluster'
+import { createClusterManifestWork } from '../../../../../lib/cluster-manifestwork'
 import { ProviderConnection, unpackProviderConnection } from '../../../../../resources'
 import { Secret } from '../../../../../resources'
 import { createResource as createResourceTool } from '../../../../../resources'
@@ -69,7 +70,7 @@ export default function CreateClusterPage() {
             providerConnection.metadata?.labels?.['cluster.open-cluster-management.io/type'] === 'ans'
     )
 
-    const fromHierarchy = location.pathname.startsWith(NavigationPath.createHubCluster)
+    const fromHierarchy = window?.localStorage?.getItem('isInfrastructureOpen') === 'true' ? true : false
 
     const [featureGateCache] = useRecoilState(featureGatesState)
 
@@ -132,63 +133,77 @@ export default function CreateClusterPage() {
                             selectedConnection?.metadata.name!
                     }
                 })
-
                 setCreationStatus({ status: 'IN_PROGRESS', messages: [] })
 
-                // creates managedCluster, deployment, secrets etc...
-                const { status, messages } = await createCluster(createResources)
-                setCreationStatus({ status, messages })
+                if (fromHierarchy) {
 
-                if (status !== 'ERROR' && selectedTemplate !== '') {
-                    // get template, modifty it and create curator cluster namespace
-                    const currentTemplate = curatorTemplates.find(
-                        (template) => template.metadata.name === selectedTemplate
-                    )
-                    const currentTemplateMutable: ClusterCurator = JSON.parse(JSON.stringify(currentTemplate))
-                    if (currentTemplateMutable.spec?.install?.towerAuthSecret)
-                        currentTemplateMutable.spec.install.towerAuthSecret = 'toweraccess'
-                    if (currentTemplateMutable.spec?.scale?.towerAuthSecret)
-                        currentTemplateMutable.spec.scale.towerAuthSecret = 'toweraccess'
-                    if (currentTemplateMutable.spec?.upgrade?.towerAuthSecret)
-                        currentTemplateMutable.spec.upgrade.towerAuthSecret = 'toweraccess'
-                    if (currentTemplateMutable.spec?.destroy?.towerAuthSecret)
-                        currentTemplateMutable.spec.destroy.towerAuthSecret = 'toweraccess'
-                    delete currentTemplateMutable.metadata.creationTimestamp
-                    delete currentTemplateMutable.metadata.resourceVersion
+                    // creates managedCluster, deployment, secrets etc...
+                    const { status, messages } = await createCluster(createResources)
+                    setCreationStatus({ status, messages })
 
-                    currentTemplateMutable!.metadata.name = createResources[0].metadata.namespace
-                    currentTemplateMutable!.metadata.namespace = createResources[0].metadata.namespace
-                    currentTemplateMutable!.spec!.desiredCuration = 'install'
-
-                    createClusterCurator(currentTemplateMutable)
-
-                    // get ansible secret, modifty it and create it in cluster namespace
-                    const ansibleSecret = ansibleCredentials.find(
-                        (secret) => secret.metadata.name === currentTemplate?.spec?.install?.towerAuthSecret
-                    )
-                    const ansibleSecretMutable: Secret = JSON.parse(JSON.stringify(ansibleSecret))
-                    ansibleSecretMutable!.metadata.name = 'toweraccess'
-                    ansibleSecretMutable!.metadata.namespace = createResources[0].metadata.namespace
-                    ansibleSecretMutable!.metadata.labels!['cluster.open-cluster-management.io/copiedFromNamespace'] =
-                        ansibleSecret?.metadata.namespace!
-                    ansibleSecretMutable!.metadata.labels!['cluster.open-cluster-management.io/copiedFromSecretName'] =
-                        ansibleSecret?.metadata.name!
-
-                    delete ansibleSecretMutable.metadata.creationTimestamp
-                    delete ansibleSecretMutable.metadata.resourceVersion
-                    delete ansibleSecretMutable.metadata.labels!['cluster.open-cluster-management.io/credentials']
-
-                    createResourceTool<Secret>(ansibleSecretMutable)
-                }
-
-                // redirect to created cluster
-                if (status === 'DONE') {
-                    if (!noRedirect) {
-                        setTimeout(() => {
-                            history.push(NavigationPath.clusterDetails.replace(':id', clusterName as string))
-                        }, 2000)
+                    if (status !== 'ERROR' && selectedTemplate !== '') {
+                        // get template, modifty it and create curator cluster namespace
+                        const currentTemplate = curatorTemplates.find(
+                            (template) => template.metadata.name === selectedTemplate
+                        )
+                        const currentTemplateMutable: ClusterCurator = JSON.parse(JSON.stringify(currentTemplate))
+                        if (currentTemplateMutable.spec?.install?.towerAuthSecret)
+                            currentTemplateMutable.spec.install.towerAuthSecret = 'toweraccess'
+                        if (currentTemplateMutable.spec?.scale?.towerAuthSecret)
+                            currentTemplateMutable.spec.scale.towerAuthSecret = 'toweraccess'
+                        if (currentTemplateMutable.spec?.upgrade?.towerAuthSecret)
+                            currentTemplateMutable.spec.upgrade.towerAuthSecret = 'toweraccess'
+                        if (currentTemplateMutable.spec?.destroy?.towerAuthSecret)
+                            currentTemplateMutable.spec.destroy.towerAuthSecret = 'toweraccess'
+                        delete currentTemplateMutable.metadata.creationTimestamp
+                        delete currentTemplateMutable.metadata.resourceVersion
+    
+                        currentTemplateMutable!.metadata.name = createResources[0].metadata.namespace
+                        currentTemplateMutable!.metadata.namespace = createResources[0].metadata.namespace
+                        currentTemplateMutable!.spec!.desiredCuration = 'install'
+    
+                        createClusterCurator(currentTemplateMutable)
+    
+                        // get ansible secret, modifty it and create it in cluster namespace
+                        const ansibleSecret = ansibleCredentials.find(
+                            (secret) => secret.metadata.name === currentTemplate?.spec?.install?.towerAuthSecret
+                        )
+                        const ansibleSecretMutable: Secret = JSON.parse(JSON.stringify(ansibleSecret))
+                        ansibleSecretMutable!.metadata.name = 'toweraccess'
+                        ansibleSecretMutable!.metadata.namespace = createResources[0].metadata.namespace
+                        ansibleSecretMutable!.metadata.labels!['cluster.open-cluster-management.io/copiedFromNamespace'] =
+                            ansibleSecret?.metadata.namespace!
+                        ansibleSecretMutable!.metadata.labels!['cluster.open-cluster-management.io/copiedFromSecretName'] =
+                            ansibleSecret?.metadata.name!
+    
+                        delete ansibleSecretMutable.metadata.creationTimestamp
+                        delete ansibleSecretMutable.metadata.resourceVersion
+                        delete ansibleSecretMutable.metadata.labels!['cluster.open-cluster-management.io/credentials']
+    
+                        createResourceTool<Secret>(ansibleSecretMutable)
+                    }
+                    // redirect to created cluster
+                    if (status === 'DONE') {
+                        if (!noRedirect) {
+                            setTimeout(() => {
+                                history.push(NavigationPath.clusterDetails.replace(':id', clusterName as string))
+                            }, 2000)
+                        }
+                    }
+                    
+                } else {
+                    const { status, messages } = await createClusterManifestWork(createResources)
+                    setCreationStatus({ status, messages })
+                    // redirect to created cluster
+                    if (status === 'DONE') {
+                        if (!noRedirect) {
+                            setTimeout(() => {
+                                history.push(NavigationPath.clusterDetails.replace(':id', clusterName as string))
+                            }, 5000)
+                        }
                     }
                 }
+                
             }
         }
     }

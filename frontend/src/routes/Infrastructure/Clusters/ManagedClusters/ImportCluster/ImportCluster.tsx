@@ -40,7 +40,7 @@ import { useCanJoinClusterSets, useMustJoinClusterSet } from '../../ClusterSets/
 import { ImportCommand, pollImportYamlSecret } from '../components/ImportCommand'
 
 export default function ImportClusterPage() {
-    const fromHierarchy = location.pathname.startsWith(NavigationPath.importHubCluster)
+    const fromHierarchy = window?.localStorage?.getItem('isInfrastructureOpen') === 'true' ? true : false
     const { t } = useTranslation(['cluster'])
     return (
         <AcmPage
@@ -106,7 +106,7 @@ export function ImportClusterPageContent() {
     const [kubeConfig, setKubeConfig] = useState<string | undefined>()
     const [importMode, setImportMode] = useState<ImportMode>(ImportMode.manual)
     const [discovered] = useState<boolean>(sessionStorage.getItem('DiscoveredClusterDisplayName') ? true : false)
-    const fromHierarchy = location.pathname.startsWith(NavigationPath.importHubCluster)
+    const fromHierarchy = window?.localStorage?.getItem('isInfrastructureOpen') === 'true' ? true : false
 
     const onReset = () => {
         setClusterName('')
@@ -254,7 +254,7 @@ export function ImportClusterPageContent() {
                                 }
                             }
                             // add hub-of-hubs.open-cluster-management.io/managed-by-hoh: 'true' annotation
-                            let fromHierarchy = location.pathname.startsWith(NavigationPath.importHubCluster)
+                            let fromHierarchy = window?.localStorage?.getItem('isInfrastructureOpen') === 'true' ? true : false
                             if (fromHierarchy) {
                                 clusterAnnotations['hub-of-hubs.open-cluster-management.io/managed-by-hoh'] = 'true'
                             }
