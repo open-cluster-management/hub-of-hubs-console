@@ -14,12 +14,19 @@ import {
     ResourceErrorCode,
 } from '../resources'
 
-
-export async function createClusterManifestWork(resources: any[]) {
+export async function createClusterManifestWork(resources: any[], hubCluster: string | '') {
     // if creating a bare metal cluster
     // make sure all the bare metal assets exist
-
+    
     let errors: any[] = []
+    if (hubCluster == '') {
+        errors.push({ message: 'cannot find proper ACM hub cluster to place this managed cluster.' })
+        return {
+            status: errors.length > 0 ? 'ERROR' : 'DONE',
+            messages: errors.length > 0 ? errors : null,
+        }
+    }
+ 
     const resourcesMap = keyBy(resources, 'kind')
     const hosts = get(resourcesMap, 'ClusterDeployment.spec.platform.baremetal.hosts')
     if (hosts) {
@@ -147,10 +154,11 @@ export async function createClusterManifestWork(resources: any[]) {
     }
     const manifestWorkAnnotations: Record<string, string> = {
     }
+
     try {
         await createManifestWork({
             manifestWorkName: 'managed-cluster-'+namespace, 
-            manifestWorkNamespace: 'hub1',
+            manifestWorkNamespace: hubCluster,
             manifestWorkLabels,
             manifestWorkAnnotations,
             manifests,

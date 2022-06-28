@@ -107,6 +107,9 @@ export function startWatching(): void {
     watchResource(token, 'tower.ansible.com/v1alpha1', 'ansiblejobs')
     watchResource(token, 'agent-install.openshift.io/v1beta1', 'agents')
     watchResource(token, 'agent-install.openshift.io/v1beta1', 'infraenvs')
+    watchResource(token, 'cluster.open-cluster-management.io/v1beta1', 'PlacementDecisions', {
+        labelSelector: { 'cluster.open-cluster-management.io/placement': 'hoh-managed-cluster-creation-placement' },
+    })
 }
 
 function watchRestResource(

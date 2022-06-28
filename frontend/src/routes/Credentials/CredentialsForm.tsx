@@ -240,7 +240,7 @@ export function CredentialsForm(props: {
 
     // BareMetal
     const [libvirtURI, setLibvirtURI] = useState(providerConnection?.stringData?.libvirtURI ?? '')
-    const [sshKnownHosts, setSshKnownHosts] = useState(providerConnection?.stringData?.sshKnownHosts ?? '')
+    const [sshKnownHosts, setSshKnownHosts] = useState(providerConnection?.stringDatasshKnownHosts ?? '')
     const [imageMirror, setImageMirror] = useState(providerConnection?.stringData?.imageMirror ?? '')
     const [bootstrapOSImage, setBootstrapOSImage] = useState(providerConnection?.stringData?.bootstrapOSImage ?? '')
     const [clusterOSImage, setClusterOSImage] = useState(providerConnection?.stringData?.clusterOSImage ?? '')

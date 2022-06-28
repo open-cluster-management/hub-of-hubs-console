@@ -23,7 +23,7 @@ import { setAvailableConnections, setAvailableTemplates } from './controlData/Co
 import './style.css'
 import hiveTemplate from './templates/hive-template.hbs'
 import endpointTemplate from './templates/endpoints.hbs'
-import { featureGatesState, secretsState, managedClustersState, clusterCuratorsState } from '../../../../../atoms'
+import { featureGatesState, secretsState, managedClustersState, clusterCuratorsState, placementDecisionsState } from '../../../../../atoms'
 import { makeStyles } from '@material-ui/styles'
 import {
     ClusterCurator,
@@ -76,6 +76,9 @@ export default function CreateClusterPage() {
 
     const [managedClusters] = useRecoilState(managedClustersState)
     const [clusterCurators] = useRecoilState(clusterCuratorsState)
+    const [placementdecisions] = useRecoilState(placementDecisionsState)
+    const hubCluster = placementdecisions.length > 0 ? placementdecisions?.[0]?.status?.decisions?.[0].clusterName : ''
+
     const curatorTemplates = filterForTemplatedCurators(clusterCurators)
     const [selectedTemplate, setSelectedTemplate] = useState('')
     const [selectedConnection, setSelectedConnection] = useState<ProviderConnection>()
@@ -192,7 +195,7 @@ export default function CreateClusterPage() {
                     }
                     
                 } else {
-                    const { status, messages } = await createClusterManifestWork(createResources)
+                    const { status, messages } = await createClusterManifestWork(createResources, hubCluster)
                     setCreationStatus({ status, messages })
                     // redirect to created cluster
                     if (status === 'DONE') {
