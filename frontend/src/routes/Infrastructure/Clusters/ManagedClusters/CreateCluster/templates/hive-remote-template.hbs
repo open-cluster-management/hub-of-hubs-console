@@ -1,0 +1,486 @@
+apiVersion: work.open-cluster-management.io/v1
+kind: ManifestWork
+metadata:
+  name: managed-cluster-{{{name}}}
+  namespace: {{{placementDecision}}}
+spec:
+  deleteOption:
+    propagationPolicy: SelectivelyOrphan
+    selectivelyOrphans:
+      orphaningRules:
+      - group: ''
+        name: '{{{name}}}'
+        namespace: ''
+        resource: namespaces
+      - group: ''
+        name: '{{{name}}}-aws-creds'
+        namespace: '{{{name}}}'
+        resource: secrets
+  workload:
+    manifests:
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: '{{{name}}}'
+    - apiVersion: hive.openshift.io/v1
+      {{! ========================================================== }}
+      {{! ========================================================== }}
+      {{! ==================ClusterDeployment======================= }}
+      {{! ========================================================== }}
+      {{! ========================================================== }}
+      kind: ClusterDeployment
+      metadata:
+        name: '{{{name}}}' ##name
+        namespace: '{{{name}}}'
+        labels:
+          cloud: '{{infrastructure}}'
+      {{#if region}}
+          region: '{{{region}}}'  ##region
+      {{/if}}
+          vendor: OpenShift
+      {{#if clusterSet}}
+          cluster.open-cluster-management.io/clusterset: '{{{clusterSet}}}'
+      {{/if}}
+      {{#if_eq infrastructure 'BMC'}}
+        annotations:
+          hive.openshift.io/try-install-once: "true"
+      {{/if_eq}}
+
+      spec:
+        baseDomain: {{{baseDomain}}}  ##baseDomain
+        clusterName: '{{{name}}}'
+        controlPlaneConfig:
+          servingCertificates: {}
+        installAttemptsLimit: 1
+        installed: false
+        platform:
+
+      {{! ==================platform======================= }}
+      {{#switch infrastructure}}
+
+        {{#case 'BMC'}}
+          baremetal:
+            libvirtSSHPrivateKeySecretRef:
+              name: {{{../../name}}}-ssh-private-key
+            hosts:
+              {{#each ../../hosts}}
+              - name: {{{hostName}}}  ##hosts.{{@index}}.hostName
+                namespace: {{{hostNamespace}}}  ##hosts.{{@index}}.hostNamespace
+                role: {{{role}}}  ##hosts.{{@index}}.role
+                bmc:
+                  address: '{{{bmcAddress}}}'  ##hosts.{{@index}}.bmcAddress
+      {{#if ../../../disableCertificateVerification}}
+                  disableCertificateVerification: true
+      {{/if}}
+                  username: {{{username}}}  ##hosts.{{@index}}.username
+                  password: {{{password}}}  ##hosts.{{@index}}.password
+                bootMACAddress: '{{{macAddress}}}'  ##hosts.{{@index}}.macAddress
+                hardwareProfile: default
+              {{/each}}
+        {{/case}}
+
+        {{#case 'AWS'}}
+          aws:
+            credentialsSecretRef:
+              name: {{{../../name}}}-aws-creds
+            region: {{{../../region}}}
+        {{/case}}
+
+        {{#case 'GCP'}}
+          gcp:
+            credentialsSecretRef:
+              name: {{{../../name}}}-gcp-creds
+            region: {{{../../region}}}
+        {{/case}}
+
+        {{#case 'Azure'}}
+          azure:
+            baseDomainResourceGroupName: {{{../../baseDomainResourceGroupName}}} ##resourceGroupName
+            credentialsSecretRef:
+              name: {{{../../name}}}-azure-creds
+            region: {{{../../region}}}
+        {{/case}}
+
+        {{#case 'vSphere'}}
+          vsphere:
+            cluster: {{{../../cluster}}}
+            certificatesSecretRef:
+              name: {{{../../name}}}-vsphere-certs
+            credentialsSecretRef:
+              name: {{{../../name}}}-vsphere-creds
+            vCenter: {{{../../vCenter}}}
+            datacenter: {{{../../datacenter}}}
+            defaultDatastore: {{{../../defaultDatastore}}}
+            network: {{{../../networkType}}}
+        {{/case}}
+
+        {{#case 'OpenStack'}}
+          openstack:
+            credentialsSecretRef:
+              name: {{{../../name}}}-openstack-creds
+            cloud: {{{../../cloud}}}
+        {{/case}}
+
+      {{/switch}}
+
+      {{! ==================provisioning======================= }}
+
+        provisioning:
+          installConfigSecretRef:
+            name: {{{name}}}-install-config
+          sshPrivateKeySecretRef:
+            name: {{{name}}}-ssh-private-key
+
+      {{#if releaseImage}}
+          imageSet:
+            name: {{{releaseImage}}}
+      {{/if}}
+      {{#if releaseImageReference}}
+          imageSetRef:
+            #{{{clusterImageSetComment}}}
+            name: {{{releaseImageReference}}}
+      {{/if}}
+      {{#if clusterReleaseImage}}
+          imageSetRef:
+            name: {{{clusterImageSetName}}}
+      {{/if}}
+
+      {{#if_eq infrastructure 'BMC'}}
+      {{#if_gt ../networks.length 1}}
+          manifestsConfigMapRef:
+            name: ipv6dualstack-featuregate-manifests
+      {{/if_gt}}
+          sshKnownHosts:
+      {{#each ../sshKnownHosts}}
+          -  "{{{.}}}"
+      {{/each}}
+      {{/if_eq}}
+        pullSecretRef:
+          name: {{{name}}}-pull-secret
+
+      {{! ========================================================== }}
+      {{! ========================================================== }}
+      {{! =======================Cluster============================ }}
+      {{! ========================================================== }}
+      {{! ========================================================== }}
+
+    - apiVersion: cluster.open-cluster-management.io/v1
+      kind: ManagedCluster
+      metadata:
+        annotations:
+          open-cluster-management/created-via: 'hive'
+      {{#if installACM}}  
+          hub-of-hubs.open-cluster-management.io/managed-by-hoh: 'true'
+      {{/if}}
+        labels:
+      {{#switch infrastructure}}
+        {{#case 'AWS'}}
+          cloud: Amazon
+          region: {{{../../region}}}
+        {{/case}}
+        {{#case 'GCP'}}
+          cloud: Google
+          region: {{{../../region}}}
+        {{/case}}
+        {{#case 'Azure'}}
+          cloud: Azure
+          region: {{{../../region}}}
+        {{/case}}
+        {{#case 'BMC'}}
+          cloud: Bare-Metal
+        {{/case}}
+        {{#case 'vSphere'}}
+          cloud: vSphere
+        {{/case}}
+        {{#case 'OpenStack'}}
+          cloud: OpenStack
+        {{/case}}
+      {{/switch}}
+          name: '{{{name}}}'
+          vendor: OpenShift
+      {{#if clusterSet}}
+          cluster.open-cluster-management.io/clusterset: '{{{clusterSet}}}'
+      {{/if}}
+          {{#each additional}}
+          {{{key}}}: '{{{value}}}'
+          {{/each}}
+        name: '{{{name}}}'
+      spec:
+        hubAcceptsClient: true
+
+
+{{#if clusterReleaseImage}}
+{{! ========================================================== }}
+{{! ========================================================== }}
+{{! ==================ClusterImageSet========================= }}
+{{! ========================================================== }}
+{{! ========================================================== }}
+    - apiVersion: hive.openshift.io/v1
+      kind: ClusterImageSet
+      metadata:
+        name: {{{clusterImageSetName}}}
+      spec:
+        releaseImage: {{{clusterReleaseImage}}}
+{{/if}}
+
+
+{{! ========================================================== }}
+{{! ========================================================== }}
+{{! ==================ConfigMap=============================== }}
+{{! ========================================================== }}
+{{! ========================================================== }}
+{{#if_eq infrastructure 'BMC'}}
+{{#if_gt ../networks.length 1}}
+    - apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: 'ipv6dualstack-featuregate-manifests'
+        namespace: '{{{../../name}}}'
+      data:
+        ipv6-dual-stack-no-upgrade.yaml: |
+          apiVersion: config.openshift.io/v1
+          kind: FeatureGate
+          metadata:
+            name: cluster
+          spec:
+            featureSet: IPv6DualStackNoUpgrade
+{{/if_gt}}
+{{/if_eq}}
+
+
+{{! ========================================================== }}
+{{! ========================================================== }}
+{{! ==================MachinePool ============================ }}
+{{! ========================================================== }}
+{{! ========================================================== }}
+
+{{! bare metal has no workerPools data so this part isn't added }}
+    {{#each workerPools}}
+    - apiVersion: hive.openshift.io/v1
+      kind: MachinePool
+      metadata:
+        name: {{{../name}}}-{{{workerName}}}
+        namespace: '{{{../name}}}'
+      spec:
+        clusterDeploymentRef:
+          name: '{{{../name}}}'
+        name: {{{workerName}}} ##workerPools.{{@index}}.workerName
+
+      {{#switch ../infrastructure}}
+
+        {{#case 'AWS'}}
+        platform:
+          aws:
+            rootVolume:
+              iops: 2000
+              size: {{{../../workerStorage}}} ##workerPools.{{@index}}.workerStorage
+              type: io1
+            type: {{{../../workerType}}} ##workerPools.{{@index}}.workerType
+            {{#if ../../workerZones}}
+            zones: ##workerPools.{{@index}}.workerZones
+            {{#each ../../workerZones}}
+            - {{{../../region}}}{{{ this }}}
+            {{/each}}
+            {{/if}}
+        {{/case}}
+
+        {{#case 'GCP'}}
+        platform:
+          gcp:
+            type: {{{../../workerType}}} ##workerPools.{{@index}}.workerType
+        {{/case}}
+
+        {{#case 'Azure'}}
+        platform:
+          azure:
+            osDisk:
+              diskSizeGB: {{{../../workerStorage}}} ##workerPools.{{@index}}.workerStorage
+            type: {{{../../workerType}}} ##workerPools.{{@index}}.workerType
+      {{#if ../../workerZones}}
+            zones: ##workerPools.{{@index}}.workerZones
+            {{#each ../../workerZones}}
+            - "{{{ this }}}"
+            {{/each}}
+      {{/if}}
+        {{/case}}
+
+        {{#case 'vSphere'}}
+        platform:
+          vsphere:
+            cpus: {{{../../cpus}}} ##workerPools.{{@index}}.cpus
+            coresPerSocket: {{{../../coresPerSocket}}} ##workerPools.{{@index}}.coresPerSocket
+            memoryMB: {{{../../memoryMB}}} ##workerPools.{{@index}}.memoryMB
+            osDisk:
+              diskSizeGB: {{{../../diskSizeGB}}} ##workerPools.{{@index}}.diskSizeGB
+        {{/case}}
+
+        {{#case 'OpenStack'}}
+        platform:
+          openstack:
+            flavor: {{{../../workerType}}} ##workerPools.{{@index}}.workerType
+        {{/case}}
+
+      {{/switch}}
+        {{#if ../singleNode}}
+        replicas: 0
+        {{else}}
+        replicas: {{{computeNodeCount}}} ##workerPools.{{@index}}.computeNodeCount
+        {{/if}}
+      {{/each}}
+
+{{! ========================================================== }}
+{{! ========================================================== }}
+{{! ==================Secrets ================================ }}
+{{! ========================================================== }}
+{{! ========================================================== }}
+
+{{#if pullSecret}}
+    - apiVersion: v1
+      kind: Secret
+      metadata:
+        name: {{{name}}}-pull-secret
+        namespace: '{{{name}}}'
+      stringData:
+        .dockerconfigjson: |-
+          {{{pullSecret}}}
+      type: kubernetes.io/dockerconfigjson
+      {{/if}}
+    - apiVersion: v1
+      kind: Secret
+      metadata:
+        name: {{{name}}}-install-config
+        namespace: '{{{name}}}'
+      type: Opaque
+      data:
+        # Base64 encoding of install-config yaml
+        install-config.yaml: {{{install-config}}}
+      {{#if ssh-privatekey}}
+    - apiVersion: v1
+      kind: Secret
+      metadata:
+        name: {{{name}}}-ssh-private-key
+        namespace: '{{{name}}}'
+      stringData:
+        ssh-privatekey: |-
+      {{#each ssh-privatekey}}
+          {{{.}}}
+      {{/each}}
+      type: Opaque
+      {{/if}}
+
+      {{#if_ne infrastructure 'BMC'}}
+    - apiVersion: v1
+      kind: Secret
+      type: Opaque
+      {{/if_ne}}
+
+      {{#switch infrastructure}}
+
+      {{#case 'AWS'}}
+      metadata:
+        name: {{{../../name}}}-aws-creds
+        namespace: '{{{../../name}}}'
+      stringData:
+        aws_access_key_id: {{{../../aws_access_key_id}}}
+        aws_secret_access_key: {{{../../aws_secret_access_key}}}
+      {{/case}}
+
+      {{#case 'GCP'}}
+      metadata:
+        name: {{{../../name}}}-gcp-creds
+        namespace: '{{{../../name}}}'
+      stringData:
+        osServiceAccount.json: |-
+      {{! handlebars does not like periods in ids, so we will use a replacement to map to the correct osServiceAccount.json - See ControlDataHelpers.js replacements[] }}
+      {{#each ../../osServiceAccountJson}}
+          {{{.}}}
+      {{/each}}
+      {{/case}}
+
+      {{#case 'Azure'}}
+      metadata:
+        name: {{{../../name}}}-azure-creds
+        namespace: '{{{../../name}}}'
+      stringData:
+        osServicePrincipal.json: |-
+      {{! handlebars does not like periods in ids, so we will use a replacement to map to the correct osServicePrincipal.json - See ControlDataHelpers.js replacements[] }}
+      {{#each ../../osServicePrincipalJson}}
+          {{{.}}}
+      {{/each}}
+      {{/case}}
+
+      {{#case 'vSphere'}}
+      metadata:
+        name: {{{../../name}}}-vsphere-creds
+        namespace: '{{{../../name}}}'
+      stringData:
+        username: {{{../../username}}}
+        password: {{{../../password}}}
+
+    - apiVersion: v1
+      kind: Secret
+      type: Opaque
+      metadata:
+        name: {{{../../name}}}-vsphere-certs
+        namespace: '{{{../../name}}}'
+      data:
+        .cacert: {{{../../cacertificate}}}
+
+      {{/case}}
+
+      {{#case 'OpenStack'}}
+      metadata:
+        name: {{{../../name}}}-openstack-creds
+        namespace: '{{{../../name}}}'
+      stringData:
+        cloud: '{{{../../cloud}}}'
+        clouds.yaml: |-
+      {{! handlebars does not like periods in ids, so we will use a replacement to map to the correct clouds.yaml - See ControlDataHelpers.js replacements[] }}
+          {{{../../cloudsYaml}}}
+      {{/case}}
+
+      {{/switch}}
+
+    - apiVersion: agent.open-cluster-management.io/v1
+      kind: KlusterletAddonConfig
+      metadata:
+        name: '{{{name}}}'
+        namespace: '{{{name}}}'
+      spec:
+        clusterName: '{{{name}}}'
+        clusterNamespace: '{{{name}}}'
+        clusterLabels:
+      {{#switch infrastructure}}
+        {{#case 'AWS'}}
+          cloud: Amazon
+        {{/case}}
+        {{#case 'GCP'}}
+          cloud: Google
+        {{/case}}
+        {{#case 'Azure'}}
+          cloud: Azure
+        {{/case}}
+        {{#case 'BMC'}}
+          cloud: Bare-Metal
+        {{/case}}
+        {{#case 'vSphere'}}
+          cloud: vSphere
+        {{/case}}
+        {{#case 'OpenStack'}}
+          cloud: OpenStack
+        {{/case}}
+      {{/switch}}
+          vendor: OpenShift
+        applicationManager:
+          {{#if argocdcluster}}
+          argocdCluster: true
+          {{/if}}
+          enabled: true
+        policyController:
+          enabled: true
+        searchCollector:
+          enabled: true
+        certPolicyController:
+          enabled: true
+        iamPolicyController:
+          enabled: true

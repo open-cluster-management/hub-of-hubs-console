@@ -50,6 +50,8 @@ import {
     PolicyReportKind,
     PlacementDecision,
     PlacementDecisionKind,
+    Placement,
+    PlacementKind,
     Secret,
     SecretKind,
     SubmarinerConfig,
@@ -97,6 +99,7 @@ export const managedClusterSetBindingsState = atom<ManagedClusterSetBinding[]>({
 })
 export const manifestWorksState = atom<ManifestWork[]>({ key: 'manifestWorks', default: [] })
 export const placementDecisionsState = atom<PlacementDecision[]>({ key: 'placementdecisions', default: [] })
+export const placementsState = atom<Placement[]>({ key: 'placements', default: [] })
 export const multiClusterHubState = atom<MultiClusterHub[]>({ key: 'multiClusterHubs', default: [] })
 export const namespacesState = atom<Namespace[]>({ key: 'namespaces', default: [] })
 export const policyreportState = atom<PolicyReport[]>({ key: 'policyreports', default: [] })
@@ -159,6 +162,7 @@ export function LoadData(props: { children?: ReactNode }) {
     const [, setManagedClusterSetBindings] = useRecoilState(managedClusterSetBindingsState)
     const [, setManifestWorks] = useRecoilState(manifestWorksState)
     const [, setPlacementDecisions] = useRecoilState(placementDecisionsState)
+    const [, setPlacements] = useRecoilState(placementsState)
     const [, setMultiClusterHubs] = useRecoilState(multiClusterHubState)
     const [, setNamespaces] = useRecoilState(namespacesState)
     const [, setPolicyReports] = useRecoilState(policyreportState)
@@ -200,8 +204,9 @@ export function LoadData(props: { children?: ReactNode }) {
         [PolicyReportKind]: setPolicyReports,
         [SecretKind]: setSecrets,
         [SubmarinerConfigKind]: setSubmarinerConfigs,
-        [PlacementDecisionKind]: setPlacementDecisions
-    }
+        [PlacementDecisionKind]: setPlacementDecisions,
+        [PlacementKind]: setPlacements
+    } 
 
     useEffect(() => {
         let eventDataQueue: WatchEvent[] | undefined = []

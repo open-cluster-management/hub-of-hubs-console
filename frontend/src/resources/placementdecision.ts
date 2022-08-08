@@ -1,6 +1,7 @@
 /* Copyright Contributors to the Open Cluster Management project */
 import { V1ObjectMeta } from '@kubernetes/client-node/dist/gen/model/v1ObjectMeta'
 import { IResource, IResourceDefinition } from './resource'
+import { listResources } from './utils/resource-request'
 
 export const PlacementDecisionApiVersion = 'cluster.open-cluster-management.io/v1beta1'
 export type PlacementDecisionApiVersionType = 'cluster.open-cluster-management.io/v1beta1'
@@ -22,4 +23,11 @@ export interface PlacementDecision extends IResource {
             clusterName: string
         }[]
     }
+}
+
+export function listPlacementDecisions(labels?: string[]) {
+    return listResources<PlacementDecision>({
+        apiVersion: PlacementDecisionApiVersion,
+        kind: PlacementDecisionKind,
+    }, labels)
 }

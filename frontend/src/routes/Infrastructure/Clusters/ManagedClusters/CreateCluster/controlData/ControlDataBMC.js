@@ -195,7 +195,7 @@ const controlDataBMC = [
         available: [],
         prompts: CREATE_CLOUD_CONNECTION,
     },
-    ...clusterDetailsControlData,
+    ...clusterDetailsControlData(),
     ////////////////////////////////////////////////////////////////////////////////////
     ///////////////////////  imageset  /////////////////////////////////////
     {

@@ -612,7 +612,7 @@ const controlDataAWS = [
         providerId: 'aws',
         prompts: CREATE_CLOUD_CONNECTION,
     },
-    ...clusterDetailsControlData,
+    ...clusterDetailsControlData(),
     ////////////////////////////////////////////////////////////////////////////////////
     ///////////////////////  imageset  /////////////////////////////////////
     {

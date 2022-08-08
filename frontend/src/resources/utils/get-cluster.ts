@@ -494,6 +494,9 @@ export function getACMDistribution(
                             }
                         }
                     }
+            } else {
+                version = `2.5.1`
+                channel = `release-` + version.substring(0, version.lastIndexOf('.'))
             }
         }
     }

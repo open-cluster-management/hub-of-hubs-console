@@ -22,8 +22,9 @@ import { controlData } from './controlData/ControlData'
 import { setAvailableConnections, setAvailableTemplates } from './controlData/ControlDataHelpers'
 import './style.css'
 import hiveTemplate from './templates/hive-template.hbs'
+import hiveRemoteTemplate from './templates/hive-remote-template.hbs'
 import endpointTemplate from './templates/endpoints.hbs'
-import { featureGatesState, secretsState, managedClustersState, clusterCuratorsState, placementDecisionsState } from '../../../../../atoms'
+import { featureGatesState, secretsState, managedClustersState, clusterCuratorsState, placementsState } from '../../../../../atoms'
 import { makeStyles } from '@material-ui/styles'
 import {
     ClusterCurator,
@@ -76,8 +77,7 @@ export default function CreateClusterPage() {
 
     const [managedClusters] = useRecoilState(managedClustersState)
     const [clusterCurators] = useRecoilState(clusterCuratorsState)
-    const [placementdecisions] = useRecoilState(placementDecisionsState)
-    const hubCluster = placementdecisions.length > 0 ? placementdecisions?.[0]?.status?.decisions?.[0].clusterName : ''
+    const [placements] = useRecoilState(placementsState)
 
     const curatorTemplates = filterForTemplatedCurators(clusterCurators)
     const [selectedTemplate, setSelectedTemplate] = useState('')
@@ -195,7 +195,7 @@ export default function CreateClusterPage() {
                     }
                     
                 } else {
-                    const { status, messages } = await createClusterManifestWork(createResources, hubCluster)
+                    const { status, messages } = await createClusterManifestWork(createResources[0])
                     setCreationStatus({ status, messages })
                     // redirect to created cluster
                     if (status === 'DONE') {
@@ -226,7 +226,10 @@ export default function CreateClusterPage() {
     }
 
     //compile templates
-    const template = Handlebars.compile(hiveTemplate)
+    var template = Handlebars.compile(hiveTemplate)
+    if (!!!fromHierarchy) {
+        template = Handlebars.compile(hiveRemoteTemplate)
+    }
     Handlebars.registerPartial('endpoints', Handlebars.compile(endpointTemplate))
 
     // if openned from bma page, pass selected bma's to editor
@@ -248,6 +251,11 @@ export default function CreateClusterPage() {
                 if (control.available) {
                     control.available = canJoinClusterSets?.map((mcs) => mcs.metadata.name) ?? []
                     control.validation.required = mustJoinClusterSet ?? false
+                }
+                break
+            case 'placement':
+                if (control.available) {
+                    control.available = placements?.map((placement) => placement.metadata.name) ?? []
                 }
                 break
             case 'infrastructure':

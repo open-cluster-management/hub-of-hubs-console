@@ -451,7 +451,7 @@ const controlDataAZR = [
         available: [],
         prompts: CREATE_CLOUD_CONNECTION,
     },
-    ...clusterDetailsControlData,
+    ...clusterDetailsControlData(),
     ///////////////////////  imageset  /////////////////////////////////////
     {
         name: 'cluster.create.ocp.image',

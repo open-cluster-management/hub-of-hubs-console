@@ -1,9 +1,6 @@
 /* Copyright Contributors to the Open Cluster Management project */
 
-import { get, keyBy } from 'lodash'
-import { syncBMAs } from './bare-metal-assets'
 import { createManifestWork } from '../resources/manifestwork'
-import { NamespaceApiVersion, NamespaceKind } from '../resources/namespace'
 import { ManifestWorkApiVersion, ManifestWorkKind } from '../resources/manifestwork'
 import { deleteResources } from './delete-resources'
 
@@ -14,68 +11,68 @@ import {
     ResourceErrorCode,
 } from '../resources'
 
-export async function createClusterManifestWork(resources: any[], hubCluster: string | '') {
+export async function createClusterManifestWork(resource: any) {
     // if creating a bare metal cluster
     // make sure all the bare metal assets exist
     
     let errors: any[] = []
-    if (hubCluster == '') {
-        errors.push({ message: 'cannot find proper ACM hub cluster to place this managed cluster.' })
-        return {
-            status: errors.length > 0 ? 'ERROR' : 'DONE',
-            messages: errors.length > 0 ? errors : null,
-        }
-    }
+    // if (hubCluster == '') {
+    //     errors.push({ message: 'cannot find proper ACM hub cluster to place this managed cluster.' })
+    //     return {
+    //         status: errors.length > 0 ? 'ERROR' : 'DONE',
+    //         messages: errors.length > 0 ? errors : null,
+    //     }
+    // }
  
-    const resourcesMap = keyBy(resources, 'kind')
-    const hosts = get(resourcesMap, 'ClusterDeployment.spec.platform.baremetal.hosts')
-    if (hosts) {
-        ;({ errors } = await syncBMAs(hosts, resources))
-        if (errors.length) {
-            return {
-                status: 'ERROR',
-                messages: errors,
-            }
-        }
-    }
+    // const resourcesMap = keyBy(resources, 'kind')
+    // const hosts = get(resourcesMap, 'ClusterDeployment.spec.platform.baremetal.hosts')
+    // if (hosts) {
+    //     ;({ errors } = await syncBMAs(hosts, resources))
+    //     if (errors.length) {
+    //         return {
+    //             status: 'ERROR',
+    //             messages: errors,
+    //         }
+    //     }
+    // }
 
     // get namespace and filter out any namespace resource
     // get ClusterDeployment and filter it out to create at the very end
-    let namespace = ''
-    const clusterResources: any = []
-    resources = resources.filter((resource: any) => {
-        const { kind, metadata = {}, spec = {} } = resource
-        switch (kind) {
-            case 'Namespace':
-                namespace = metadata.name
-                break
+    // let namespace = ''
+    // const clusterResources: any = []
+    // resources = resources.filter((resource: any) => {
+    //     const { kind, metadata = {}, spec = {} } = resource
+    //     switch (kind) {
+    //         case 'Namespace':
+    //             namespace = metadata.name
+    //             break
 
-            case 'ClusterPool':
-                namespace = metadata.namespace
-                clusterResources.push(resource)
-                ;({ namespace } = metadata)
-                break
+    //         case 'ClusterPool':
+    //             namespace = metadata.namespace
+    //             clusterResources.push(resource)
+    //             ;({ namespace } = metadata)
+    //             break
 
-            case 'ClusterDeployment':
-                clusterResources.push(resource)
-                ;({ namespace } = metadata)
-                break
+    //         case 'ClusterDeployment':
+    //             clusterResources.push(resource)
+    //             ;({ namespace } = metadata)
+    //             break
 
-            case 'ManagedCluster':
-                ;({ name: namespace } = metadata)
-                // add this annotation to identify the mcl is created from hoh.
-                // so we can destroy it from hoh.
-                //resource.metadata.annotations['hub-of-hubs.open-cluster-management.io/create-from-hoh'] = 'true'
-                break
+    //         case 'ManagedCluster':
+    //             ;({ name: namespace } = metadata)
+    //             // add this annotation to identify the mcl is created from hoh.
+    //             // so we can destroy it from hoh.
+    //             //resource.metadata.annotations['hub-of-hubs.open-cluster-management.io/create-from-hoh'] = 'true'
+    //             break
 
-            default:
-                if (spec && spec.clusterNamespace) {
-                    namespace = spec.clusterNamespace
-                }
-                break
-        }
-        return true
-    })
+    //         default:
+    //             if (spec && spec.clusterNamespace) {
+    //                 namespace = spec.clusterNamespace
+    //             }
+    //             break
+    //     }
+    //     return true
+    // })
 
     // create cluster resources
     // errors = []
@@ -99,86 +96,8 @@ export async function createClusterManifestWork(resources: any[], hubCluster: st
     // }
     // create namespace
 
-    resources.push(
-        {
-            apiVersion: NamespaceApiVersion,
-            kind: NamespaceKind,
-            metadata: { name: namespace },
-        }
-    )
-    // create clusterrole
-    resources.push(
-        {
-            apiVersion: 'rbac.authorization.k8s.io/v1',
-            kind: 'ClusterRole',
-            metadata: { name: 'open-cluster-management:hub-of-hubs-managedcluster-creation' },
-            rules: [
-                {
-                    apiGroups: ["cluster.open-cluster-management.io"],
-                    resources: ["managedclusters"],
-                    verbs: ["create"]
-                }
-            ]
-        }
-    )
-    // create clusterrolebinding
-    resources.push(
-        {
-            apiVersion: 'rbac.authorization.k8s.io/v1',
-            kind: 'ClusterRoleBinding',
-            metadata: { name: 'open-cluster-management:hub-of-hubs-managedcluster-creation' },
-            roleRef:{
-                apiGroup: 'rbac.authorization.k8s.io',
-                kind: 'ClusterRole',
-                // give the cluster-admin permission temporarily
-                // Failed to apply manifest: admission webhook "ocm.validating.webhook.admission.open-cluster-management.io" denied the request: user "system:serviceaccount:open-cluster-management-agent:klusterlet-work-sa" cannot add/remove the resource to/from ManagedClusterSet "default"'
-                //name: 'open-cluster-management:hub-of-hubs-managedcluster-creation'
-                name: 'cluster-admin'
-            },
-            subjects: [
-                {
-                    kind: "ServiceAccount",
-                    name: "klusterlet-work-sa",
-                    namespace: 'open-cluster-management-agent'
-                }
-            ]
-        }
-    )
-    let manifests: any[] = []
-    resources.filter((resource: any) => {
-        manifests.push(
-            resource
-        )
-    })
-    const manifestWorkLabels: Record<string, string> = {
-    }
-    const manifestWorkAnnotations: Record<string, string> = {
-    }
-
     try {
-        await createManifestWork({
-            manifestWorkName: 'managed-cluster-'+namespace, 
-            manifestWorkNamespace: hubCluster,
-            manifestWorkLabels,
-            manifestWorkAnnotations,
-            manifests,
-            propagationPolicy: 'SelectivelyOrphan',
-            selectivelyOrphans: {
-                orphaningRules: [
-                    {
-                        group: '',
-                        resource: 'namespaces',
-                        name: namespace,
-                    },
-                    {
-                        group: '',
-                        resource: 'secrets',
-                        name: namespace + '-aws-creds',
-                        namespace: namespace,
-                    }
-                ]
-            }
-        }).promise 
+        await createManifestWork(resource).promise 
     } catch (err) {
         errors.push({ message: err })
     }

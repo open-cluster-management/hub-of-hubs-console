@@ -2,10 +2,11 @@
 // eslint-disable-next-line no-use-before-define
 import React from 'react'
 import { VALIDATE_CIDR, VALIDATE_NUMERIC, VALIDATE_BASE_DNS_NAME_REQUIRED, VALID_DNS_LABEL } from 'temptifly'
-import { listClusterImageSets } from '../../../../../../resources'
+import { listClusterImageSets, listPlacementDecisions } from '../../../../../../resources'
 import { unpackProviderConnection } from '../../../../../../resources'
 import { NavigationPath } from '../../../../../../NavigationPath'
-import _ from 'lodash'
+import _, { reverse } from 'lodash'
+import { appendFile } from 'fs'
 
 const OpenNewTab = () => (
     <svg width="24px" height="24px" x="0px" y="0px" viewBox="0 0 1024 1024" xmlSpace="preserve" role="presentation">
@@ -55,6 +56,16 @@ const getImageName = (image) => {
 const getImageVersion = (image) => {
     const match = /(\d+.\d+.\d+)-/gm.exec(image)
     return _.get(match, '1', '')
+}
+
+const getPlacementDecision = (placement, controlData) => {
+    if (!!placement) {
+        const promiseResult = listPlacementDecisions(['cluster.open-cluster-management.io/placement='+placement])
+        promiseResult.promise.then((results) => {
+            var placementDecision = controlData.find(({ id }) => id === 'placementDecision')
+            placementDecision.active = results?.[0].status.decisions?.[0].clusterName
+        })
+    }
 }
 
 export const getSimplifiedImageName = (image) => {
@@ -180,7 +191,7 @@ export const setAvailableTemplates = (control, templates) => {
     control.available = templates.map((template) => template.metadata.name)
 }
 
-export const clusterDetailsControlData = [
+const clusterNameControlData = [
     {
         id: 'detailStep',
         type: 'step',
@@ -197,7 +208,32 @@ export const clusterDetailsControlData = [
             required: true,
         },
         reverse: 'ClusterDeployment[0].metadata.name',
+    }
+]
+
+const clusterPlacementControlData = [
+    {
+        name: 'creation.ocp.placement',
+        tooltip: 'tooltip.creation.ocp.placement',
+        id: 'placement',
+        type: 'singleselect',
+        placeholder: 'placeholder.creation.ocp.placement',
+        validation: {
+            required: true,
+        },
+        onSelect: function(control, controlData) {
+            getPlacementDecision(control.active, controlData)
+        },
+        available: [],
     },
+    {
+        id: 'placementDecision',
+        type: 'text',
+        active: '',
+        hidden: true
+    },
+]
+const clusterSetControlData = [
     {
         name: 'creation.ocp.clusterSet',
         tooltip: 'tooltip.creation.ocp.clusterSet',
@@ -209,6 +245,9 @@ export const clusterDetailsControlData = [
         },
         available: [],
     },
+]
+
+const clusterBaseDomainControlData = [
     {
         name: 'creation.ocp.baseDomain',
         tooltip: 'tooltip.creation.ocp.baseDomain',
@@ -217,6 +256,15 @@ export const clusterDetailsControlData = [
         validation: VALIDATE_BASE_DNS_NAME_REQUIRED,
     },
 ]
+
+export const clusterDetailsControlData = () => {
+    var fromHierarchy = window?.localStorage?.getItem('isInfrastructureOpen') === 'true' ? true : false
+    if (fromHierarchy) {
+        return [...clusterNameControlData, ...clusterSetControlData, ...clusterBaseDomainControlData]
+    } else {
+        return [...clusterNameControlData, ...clusterPlacementControlData, ...clusterSetControlData, ...clusterBaseDomainControlData]
+    }
+}
 
 export const networkingControlData = [
     ///////////////////////  networking  /////////////////////////////////////

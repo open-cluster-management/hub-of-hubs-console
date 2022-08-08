@@ -57,32 +57,6 @@ export interface ManifestWork extends IResource {
     }
 }
 
-export const createManifestWork = (data: {
-    manifestWorkName: string | undefined
-    manifestWorkNamespace: string | undefined
-    manifestWorkLabels: Record<string, string>
-    manifestWorkAnnotations?: Record<string, string>
-    manifests:any[]
-    propagationPolicy: string | 'Foreground'
-    selectivelyOrphans: any
-}) => {
-    return createResource<ManifestWork>({
-        apiVersion: ManifestWorkApiVersion,
-        kind: ManifestWorkKind,
-        metadata: {
-            name: data.manifestWorkName,
-            namespace: data.manifestWorkNamespace,
-            labels: data.manifestWorkLabels,
-            annotations: data.manifestWorkAnnotations,
-        },
-        spec: {
-            workload: {
-                manifests: data.manifests
-            },
-            deleteOption: {
-                propagationPolicy: data.propagationPolicy,
-                selectivelyOrphans: data.selectivelyOrphans
-            }
-        }
-    })
+export const createManifestWork = (resource: any) => {
+    return createResource<ManifestWork>(resource)
 }

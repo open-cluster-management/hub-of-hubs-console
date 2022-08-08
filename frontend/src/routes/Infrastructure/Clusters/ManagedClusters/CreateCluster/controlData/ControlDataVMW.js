@@ -39,7 +39,7 @@ const controlDataVMW = [
         prompts: CREATE_CLOUD_CONNECTION,
         encode: ['cacertificate'],
     },
-    ...clusterDetailsControlData,
+    ...clusterDetailsControlData(),
     ////////////////////////////////////////////////////////////////////////////////////
     ///////////////////////  imageset  /////////////////////////////////////
     {
