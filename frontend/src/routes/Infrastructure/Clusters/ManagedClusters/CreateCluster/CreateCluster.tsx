@@ -84,6 +84,10 @@ export default function CreateClusterPage() {
     const [selectedConnection, setSelectedConnection] = useState<ProviderConnection>()
     const classes = useStyles()
 
+    if (!fromHierarchy) {
+        controlData[1].available = controlData[1].available?.filter((provider) => provider.id == 'AWS' || provider.id == 'GCP' || provider.id == 'Azure')
+    }
+
     // create portals for buttons in header
     const switches = (
         <div className="switch-controls">
