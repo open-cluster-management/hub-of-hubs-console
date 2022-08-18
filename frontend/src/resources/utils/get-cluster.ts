@@ -18,8 +18,7 @@ import { AgentClusterInstallKind } from '../agent-cluster-install'
 
 const { isDraft } = CIM
 
-export const HoHManagedByAnnotation = 'hub-of-hubs.open-cluster-management.io/managed-by'
-export const HoHManagedByHoHAnnotation = 'hub-of-hubs.open-cluster-management.io/managed-by-hoh'
+export const HoHManagedByAnnotation = 'global-hub.open-cluster-management.io/managed-by'
 
 export enum ClusterStatus {
     'pending' = 'pending',
@@ -220,8 +219,8 @@ export function mapClusters(
                 )
             }
         } else {
-            let managedClusterManagedBy = managedCluster?.metadata?.annotations?.[HoHManagedByHoHAnnotation]
-            if (managedClusterManagedBy !== undefined && managedClusterManagedBy === 'true') {
+            let managedClusterManagedBy = managedCluster?.metadata?.annotations?.[HoHManagedByAnnotation]
+            if (managedClusterManagedBy !== undefined && managedClusterManagedBy === 'global-hub') {
                 return
             }
             return getCluster(

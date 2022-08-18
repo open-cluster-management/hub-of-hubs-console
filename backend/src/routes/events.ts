@@ -98,7 +98,7 @@ export function startWatching(): void {
         },
     })
     watchResource(token, 'work.open-cluster-management.io/v1', 'ManifestWorks', {
-        labelSelector: { 'hub-of-hubs.open-cluster-management.io/managed-by': 'hoh' },
+        labelSelector: { 'global-hub.open-cluster-management.io/managed-by': 'multicluster-global-hub-operator' },
     })
     watchResource(token, 'extensions.hive.openshift.io/v1beta1', 'agentclusterinstalls')
     watchResource(token, 'cluster.open-cluster-management.io/v1beta1', 'clustercurators')
@@ -108,7 +108,7 @@ export function startWatching(): void {
     watchResource(token, 'agent-install.openshift.io/v1beta1', 'agents')
     watchResource(token, 'agent-install.openshift.io/v1beta1', 'infraenvs')
     watchResource(token, 'cluster.open-cluster-management.io/v1beta1', 'Placements', {
-        labelSelector: { 'hub-of-hubs.open-cluster-management.io/used-by': 'hub-of-hubs' },
+        labelSelector: { 'global-hub.open-cluster-management.io/managed-by': 'multicluster-global-hub-operator' },
     })
 }
 

@@ -62,7 +62,6 @@ export async function createClusterManifestWork(resource: any) {
     //             ;({ name: namespace } = metadata)
     //             // add this annotation to identify the mcl is created from hoh.
     //             // so we can destroy it from hoh.
-    //             //resource.metadata.annotations['hub-of-hubs.open-cluster-management.io/create-from-hoh'] = 'true'
     //             break
 
     //         default:

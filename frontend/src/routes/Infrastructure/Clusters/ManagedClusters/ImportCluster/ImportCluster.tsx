@@ -253,10 +253,10 @@ export function ImportClusterPageContent() {
                                     'open-cluster-management/created-via': 'discovery',
                                 }
                             }
-                            // add hub-of-hubs.open-cluster-management.io/managed-by-hoh: 'true' annotation
+                            // add 'global-hub.open-cluster-management.io/managed-by': 'global-hub' annotation
                             let fromHierarchy = window?.localStorage?.getItem('isInfrastructureOpen') === 'true' ? true : false
                             if (fromHierarchy) {
-                                clusterAnnotations['hub-of-hubs.open-cluster-management.io/managed-by-hoh'] = 'true'
+                                clusterAnnotations['global-hub.open-cluster-management.io/managed-by'] = 'global-hub'
                             }
                             const createdResources: IResource[] = []
                             return new Promise(async (resolve, reject) => {
