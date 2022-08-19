@@ -200,7 +200,7 @@ export function mapClusters(
         if (managedClusterName === 'local-cluster') return
         if (!!fromHierarchical) {
             let managedClusterManagedBy = managedCluster?.metadata?.annotations?.[HoHManagedByAnnotation]
-            if (managedClusterManagedBy === undefined) {
+            if (managedClusterManagedBy === "global-hub") {
                 return getHierarchicalCluster(
                     managedClusterInfos,
                     managedClusterInfo,
@@ -220,7 +220,7 @@ export function mapClusters(
             }
         } else {
             let managedClusterManagedBy = managedCluster?.metadata?.annotations?.[HoHManagedByAnnotation]
-            if (managedClusterManagedBy !== undefined && managedClusterManagedBy === 'global-hub') {
+            if (managedClusterManagedBy === 'global-hub') {
                 return
             }
             return getCluster(
