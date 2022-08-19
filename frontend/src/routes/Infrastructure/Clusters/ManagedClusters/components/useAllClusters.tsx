@@ -15,7 +15,7 @@ import {
     manifestWorksState,
 } from '../../../../../atoms'
 
-export function useAllClusters(fromHierarchical: boolean | false) {
+export function useAllClusters() {
     const [
         managedClusters,
         clusterDeployments,
@@ -49,8 +49,7 @@ export function useAllClusters(fromHierarchical: boolean | false) {
                 managedClusterAddons,
                 clusterClaims,
                 clusterCurators,
-                agentClusterInstalls,
-                fromHierarchical
+                agentClusterInstalls
             ),
         [
             clusterDeployments,

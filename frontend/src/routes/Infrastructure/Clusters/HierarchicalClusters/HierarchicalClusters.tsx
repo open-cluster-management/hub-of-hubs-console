@@ -48,7 +48,7 @@ export default function ClustersPage() {
     const { t } = useTranslation(['cluster', 'discovery'])
     const alertContext = useContext(AcmAlertContext)
     const isDiscoveryBannerDismissed = 'true'
-    let clusters = useAllClusters(true)
+    let clusters = useAllClusters()
     clusters = clusters.filter((cluster) => {
         // don't show clusters in cluster pools in table
         if (cluster) {

@@ -163,9 +163,9 @@ export function mapClusters(
     managedClusterAddOns: ManagedClusterAddOn[] = [],
     clusterClaims: ClusterClaim[] = [],
     clusterCurators: ClusterCurator[] = [],
-    agentClusterInstalls: CIM.AgentClusterInstallK8sResource[] = [],
-    fromHierarchical: boolean = false
+    agentClusterInstalls: CIM.AgentClusterInstallK8sResource[] = []
 ) {
+    const fromHierarchy = window?.localStorage?.getItem('isInfrastructureOpen') === 'true' ? true : false
     const mcs = managedClusters.filter((mc) => mc.metadata?.name) ?? []
     let uniqueClusterNames = Array.from(
         new Set([
@@ -198,7 +198,7 @@ export function mapClusters(
             )
         const managedClusterName = clusterDeployment?.metadata.name ?? managedCluster?.metadata.name ?? managedClusterInfo?.metadata.name
         if (managedClusterName === 'local-cluster') return
-        if (!!fromHierarchical) {
+        if (!!fromHierarchy) {
             let managedClusterManagedBy = managedCluster?.metadata?.annotations?.[HoHManagedByAnnotation]
             if (managedClusterManagedBy === "global-hub") {
                 return getHierarchicalCluster(
