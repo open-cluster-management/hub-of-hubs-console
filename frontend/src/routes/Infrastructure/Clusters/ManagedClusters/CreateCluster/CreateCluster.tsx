@@ -253,7 +253,8 @@ export default function CreateClusterPage() {
         switch (control.id) {
             case 'clusterSet':
                 if (control.available) {
-                    control.available = canJoinClusterSets?.map((mcs) => mcs.metadata.name) ?? []
+                    control.available = canJoinClusterSets?.filter((mcs) => mcs.metadata.name !== 'global')
+                    .map((mcs) => mcs.metadata.name) ?? []
                     control.validation.required = mustJoinClusterSet ?? false
                 }
                 break

@@ -148,7 +148,8 @@ export function ImportClusterPageContent() {
                     }
                     isRequired={mustJoinClusterSet}
                 >
-                    {canJoinClusterSets?.map((mcs) => (
+                    {canJoinClusterSets?.filter((mcs) => mcs.metadata.name != 'global')
+                    .map((mcs) => (
                         <SelectOption key={mcs.metadata.name} value={mcs.metadata.name}>
                             {mcs.metadata.name}
                         </SelectOption>
